@@ -61,6 +61,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
     );
   }
 
+  // --- UI BUILDER METHODS ---
+
   Widget _buildSurveyUI() {
     return Container(
       color: const Color(0xFFF9F7F2),
@@ -197,9 +199,10 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
     super.dispose();
   }
 
+  // UPDATED REDIRECT LOGIC
   Future<void> _launchRewardLink() async {
-    // UPDATED: Now points to your HotelPlanner portal
-    final Uri url = Uri.parse('https://myfitvacation.hotelplanner.com/');
+    // Redirects to GHL Reward Page first for tracking
+    final Uri url = Uri.parse('https://myfitvacation.com/align-rewards');
     if (!await launchUrl(url)) throw Exception('Could not launch $url');
   }
 
