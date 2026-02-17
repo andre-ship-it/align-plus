@@ -8,8 +8,9 @@ import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
 
-// Safe conditional import for PWA features
-import 'package:my_fit_vacation_1/main.dart' if (dart.library.html) 'dart:html' as html;
+// CRITICAL FIX: Removed the buggy package-specific conditional import 
+// and replaced it with a standard safe web-only check.
+import 'dart:html' as html if (dart.library.io) 'package:flutter/material.dart';
 
 void main() => runApp(const AlignPlusApp());
 
@@ -47,6 +48,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   void initState() {
     super.initState();
     _loadStreak();
+    // Safety delay to ensure the browser context is ready before checking PWA status
     if (kIsWeb) {
       Future.delayed(const Duration(seconds: 2), () => _safePwaCheck());
     }
@@ -54,6 +56,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   void _safePwaCheck() {
     try {
+      // Check if we are on a web platform first
+      if (!kIsWeb) return;
+
       final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
                                 (html.window.navigator as dynamic).standalone == true;
       final bool isIOS = html.window.navigator.userAgent.toLowerCase().contains('iphone');
@@ -62,7 +67,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
         _showPWAInstallModal();
       }
     } catch (e) {
-      debugPrint("PWA check skipped: $e");
+      debugPrint("PWA check skipped to prevent mobile crash: $e");
     }
   }
 
@@ -71,6 +76,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Install align+"),
         content: const Text("Add this ritual to your Home Screen for the full Bali experience! \n\n1. Tap Share\n2. Add to Home Screen"),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Got it"))],
