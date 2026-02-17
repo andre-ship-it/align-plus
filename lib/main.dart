@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; 
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -163,10 +164,27 @@ class _MainAppFlowState extends State<MainAppFlow> {
               const Icon(Icons.install_mobile_rounded, color: Colors.white, size: 48),
               const SizedBox(height: 15),
               const Text("Download align+", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              const Text("1. Tap the Share icon\n2. Scroll down\n3. Select 'Add to Home Screen'", 
+              const SizedBox(height: 15),
+              const Text("1. Tap Share\n2. Select 'Add to Home Screen'", 
                 textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16, height: 1.5)),
               const SizedBox(height: 25),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(const ClipboardData(text: "https://app.myfitvacation.com"));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Invite link copied to clipboard! 📋"), duration: Duration(seconds: 2)),
+                  );
+                },
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text("COPY INVITE LINK"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF008080),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                ),
+              ),
+              const SizedBox(height: 20),
               const Text("Your ritual is now one tap away.", style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
             ],
           ),
