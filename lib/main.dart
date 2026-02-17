@@ -39,7 +39,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994079954da040a6970fcb2.gif'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
-  // Rotation data for the 30-Day Reset
   final List<String> _locations = ["Ubud Jungle", "Uluwatu Cliffs", "Seminyak Beach", "Canggu Rice Fields", "Nusa Penida", "Amed Coast", "Sidemen Valley"];
   final List<String> _stretches = ["Neck & Shoulders", "Lower Back Relief", "Hip Openers", "Full Body Flow", "Chest & Heart Opener", "Spinal Twist", "Hamstring Length"];
 
@@ -114,6 +113,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
       case 1:
         return _buildLibraryUI();
       case 2:
+        return _buildShareUI(); // New Share Subcard
+      case 3:
         return _buildInstallUI();
       default:
         return const SizedBox.shrink();
@@ -134,7 +135,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 child: GridView.builder(
                   padding: const EdgeInsets.fromLTRB(25, 30, 25, 120),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // Changed to 2 for better readability of guidance text
+                    crossAxisCount: 2,
                     mainAxisSpacing: 15,
                     crossAxisSpacing: 15,
                     childAspectRatio: 1.2,
@@ -196,6 +197,45 @@ class _MainAppFlowState extends State<MainAppFlow> {
     );
   }
 
+  Widget _buildShareUI() {
+    return Stack(
+      children: [
+        Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
+        Center(child: _glassCard(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.favorite_rounded, color: Colors.white, size: 48),
+              const SizedBox(height: 15),
+              const Text("Spread the Light", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              const Text("Your mind is clear, your body aligned. Invite others to start their 30-day journey.", 
+                textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5)),
+              const SizedBox(height: 25),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(const ClipboardData(text: "I'm resetting my mind and body on 30daymindbodyreset.com 🌴 Join me!"));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Invite copied! Paste in your Story 🌴"), duration: Duration(seconds: 2)),
+                  );
+                },
+                icon: const Icon(Icons.copy_rounded),
+                label: const Text("COPY INVITE TEXT"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF008080),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                ),
+              ),
+            ],
+          ),
+          false,
+        )),
+      ],
+    );
+  }
+
   Widget _buildInstallUI() {
     return Stack(
       children: [
@@ -215,11 +255,11 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 onPressed: () {
                   Clipboard.setData(const ClipboardData(text: "https://app.myfitvacation.com"));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Invite link copied to clipboard! 📋"), duration: Duration(seconds: 2)),
+                    const SnackBar(content: Text("Link copied! 📋"), duration: Duration(seconds: 2)),
                   );
                 },
-                icon: const Icon(Icons.copy_rounded),
-                label: const Text("COPY INVITE LINK"),
+                icon: const Icon(Icons.link_rounded),
+                label: const Text("COPY APP LINK"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF008080),
@@ -257,9 +297,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   Widget _buildGlassBottomNav() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 30),
       height: 70,
-      constraints: const BoxConstraints(maxWidth: 600),
+      constraints: const BoxConstraints(maxWidth: 700),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(35),
         child: BackdropFilter(
@@ -276,6 +316,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
               BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Map"),
+              BottomNavigationBarItem(icon: Icon(Icons.ios_share_rounded), label: "Share"),
               BottomNavigationBarItem(icon: Icon(Icons.add_to_home_screen_rounded), label: "Install"),
             ],
           ),
@@ -367,7 +408,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Forces visibility on Desktop by filling parent stack
         SizedBox.expand(
           child: Image.network(
             _movements == 5 ? widget.imageUrl : widget.gifUrl, 
