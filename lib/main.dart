@@ -93,7 +93,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
         ? MistRevealScreen(
             gifUrl: _ritualGifUrl, 
             imageUrl: _revealImageUrl, 
-            title: "Morning Ritual",
+            title: "Morning Ritual" ,
             currentStreak: _streak,
             onComplete: (newStreak) => setState(() => _streak = newStreak),
           ) 
@@ -103,6 +103,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Widget _buildLibraryUI() {
+    bool isMilestone = _streak >= 7;
+
     return Stack(
       children: [
         Positioned.fill(
@@ -122,56 +124,69 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  border: Border.all(
+                    color: isMilestone ? Colors.amber.withOpacity(0.5) : Colors.white.withOpacity(0.3),
+                    width: isMilestone ? 2 : 1,
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      "Bali Library",
+                    Text(
+                      isMilestone ? "MILESTONE ACHIEVED! 🏆" : "Bali Library",
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
+                        color: isMilestone ? Colors.amber[100] : Colors.white,
+                        fontSize: isMilestone ? 20 : 28,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
                         shadows: [Shadow(blurRadius: 10, color: Colors.black38)],
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     Text(
-                      "Current Streak: $_streak Days 🔥",
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      "$_streak DAY STREAK 🔥",
+                      style: const TextStyle(
+                        color: Colors.white, 
+                        fontSize: 42, 
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
                     ),
-                    const SizedBox(height: 25),
-                    
-                    // SOCIAL SHARING BUTTON
+                    if (isMilestone) ...[
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Your mind is clear, your body aligned.",
+                        style: TextStyle(color: Colors.white, fontStyle: FontStyle.italic, fontSize: 16),
+                      ),
+                    ],
+                    const SizedBox(height: 30),
                     ElevatedButton.icon(
                       onPressed: () async {
-                        final String shareText = "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
-                        final String shareUrl = "https://app.myfitvacation.com";
+                        final String shareText = isMilestone 
+                          ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
+                          : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
                         
-                        // Using mailto as a fallback, but the logic is ready for Web Share
-                        final Uri emailUri = Uri.parse(
-                          'mailto:?subject=My Bali Alignment Streak&body=$shareText $shareUrl'
-                        );
+                        final String shareUrl = "https://app.myfitvacation.com";
+                        final Uri emailUri = Uri.parse('mailto:?subject=My Bali Alignment Streak&body=$shareText $shareUrl');
                         
                         if (await canLaunchUrl(emailUri)) {
                           await launchUrl(emailUri);
                         }
                       },
                       icon: const Icon(Icons.share_rounded),
-                      label: const Text("SHARE TO SOCIALS"),
+                      label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE TO SOCIALS"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF008080),
+                        backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080),
                         foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 50),
+                        minimumSize: const Size(double.infinity, 55),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                        elevation: 5,
                       ),
                     ),
-                    
                     const SizedBox(height: 20),
                     const Text(
                       "Full Library Coming Soon",
-                      style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+                      style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
                     ),
                   ],
                 ),
@@ -207,7 +222,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 }
 
-// ... MistRevealScreen class remains identical to your current main.dart ...
 class MistRevealScreen extends StatefulWidget {
   final String gifUrl;
   final String imageUrl;
