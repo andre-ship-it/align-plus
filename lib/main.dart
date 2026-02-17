@@ -137,7 +137,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
                     int dayNumber = index + 1;
                     bool isCompleted = dayNumber <= _streak;
                     bool isNext = dayNumber == _streak + 1;
-
                     return _buildMilestoneTile(dayNumber, isCompleted, isNext);
                   },
                 ),
@@ -167,10 +166,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
             child: Text(
               "$day",
               style: TextStyle(
-                color: Colors.white,
+                color: Colors.white.withOpacity(isCompleted || isNext ? 1.0 : 0.5),
                 fontSize: 18,
                 fontWeight: isCompleted || isNext ? FontWeight.bold : FontWeight.normal,
-                opacity: isCompleted || isNext ? 1.0 : 0.5,
               ),
             ),
           ),
@@ -215,6 +213,22 @@ class _MainAppFlowState extends State<MainAppFlow> {
           false,
         )),
       ],
+    );
+  }
+
+  void _shareProgress(bool isMilestone) async {
+    final String shareText = isMilestone 
+      ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
+      : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
+    const String shareUrl = "https://app.myfitvacation.com";
+
+    Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Streak copied! Paste into Instagram or X 🌴✨"),
+        backgroundColor: Color(0xFF008080),
+        duration: Duration(seconds: 4),
+      ),
     );
   }
 
@@ -266,7 +280,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 }
 
-// MistRevealScreen remains unchanged as it handles the core ritual logic.
 class MistRevealScreen extends StatefulWidget {
   final String gifUrl;
   final String imageUrl;
