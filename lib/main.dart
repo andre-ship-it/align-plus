@@ -89,131 +89,145 @@ class _MainAppFlowState extends State<MainAppFlow> {
   Widget _buildMainApp() {
     return Scaffold(
       extendBody: true,
-      body: _selectedTab == 0 
-        ? MistRevealScreen(
-            gifUrl: _ritualGifUrl, 
-            imageUrl: _revealImageUrl, 
-            title: "Morning Ritual" ,
-            currentStreak: _streak,
-            onComplete: (newStreak) => setState(() => _streak = newStreak),
-          ) 
-        : _buildLibraryUI(),
+      body: _getBody(),
       bottomNavigationBar: _buildGlassBottomNav(),
     );
   }
 
+  Widget _getBody() {
+    switch (_selectedTab) {
+      case 0:
+        return MistRevealScreen(
+          gifUrl: _ritualGifUrl, 
+          imageUrl: _revealImageUrl, 
+          title: "Morning Ritual",
+          currentStreak: _streak,
+          onComplete: (newStreak) => setState(() => _streak = newStreak),
+        );
+      case 1:
+        return _buildLibraryUI();
+      case 2:
+        return _buildInstallUI();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   Widget _buildLibraryUI() {
     bool isMilestone = _streak >= 7;
-
     return Stack(
       children: [
-        Positioned.fill(
-          child: Image.network(
-            _revealImageUrl,
-            fit: BoxFit.cover,
-          ),
-        ),
-        Center(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(25),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.all(30),
-                width: MediaQuery.of(context).size.width * 0.85,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: isMilestone ? Colors.amber.withOpacity(0.5) : Colors.white.withOpacity(0.3),
-                    width: isMilestone ? 2 : 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      isMilestone ? "MILESTONE ACHIEVED! 🏆" : "Bali Library",
-                      style: TextStyle(
-                        color: isMilestone ? Colors.amber[100] : Colors.white,
-                        fontSize: isMilestone ? 20 : 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                        shadows: [Shadow(blurRadius: 10, color: Colors.black38)],
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      "$_streak DAY STREAK 🔥",
-                      style: const TextStyle(
-                        color: Colors.white, 
-                        fontSize: 42, 
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    if (isMilestone) ...[
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Your mind is clear, your body aligned.",
-                        style: TextStyle(color: Colors.white, fontStyle: FontStyle.italic, fontSize: 16),
-                      ),
-                    ],
-                    const SizedBox(height: 30),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final String shareText = isMilestone 
-                          ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
-                          : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
-                        
-                        final String shareUrl = "https://app.myfitvacation.com";
-                        final Uri emailUri = Uri.parse('mailto:?subject=My Bali Alignment Streak&body=$shareText $shareUrl');
-                        
-                        if (await canLaunchUrl(emailUri)) {
-                          await launchUrl(emailUri);
-                        }
-                      },
-                      icon: const Icon(Icons.share_rounded),
-                      label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE TO SOCIALS"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 55),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                        elevation: 5,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Full Library Coming Soon",
-                      style: TextStyle(color: Colors.white70, fontSize: 10, letterSpacing: 1),
-                    ),
-                  ],
+        Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
+        Center(child: _glassCard(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(isMilestone ? "MILESTONE ACHIEVED! 🏆" : "Bali Library", 
+                style: TextStyle(color: isMilestone ? Colors.amber[100] : Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              Text("$_streak DAY STREAK 🔥", 
+                style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -1)),
+              if (isMilestone) ...[
+                const SizedBox(height: 10),
+                const Text("Your mind is clear, your body aligned.", 
+                  style: TextStyle(color: Colors.white, fontStyle: FontStyle.italic, fontSize: 16)),
+              ],
+              const SizedBox(height: 25),
+              ElevatedButton.icon(
+                onPressed: () => _shareProgress(isMilestone),
+                icon: const Icon(Icons.share_rounded),
+                label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE PROGRESS"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080), 
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                 ),
               ),
-            ),
+            ],
           ),
-        ),
+          isMilestone,
+        )),
       ],
+    );
+  }
+
+  Widget _buildInstallUI() {
+    return Stack(
+      children: [
+        Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
+        Center(child: _glassCard(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.install_mobile_rounded, color: Colors.white, size: 48),
+              const SizedBox(height: 15),
+              const Text("Download align+", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              const Text("1. Tap the Share icon\n2. Scroll down\n3. Select 'Add to Home Screen'", 
+                textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16, height: 1.5)),
+              const SizedBox(height: 25),
+              const Text("Your ritual is now one tap away.", style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
+            ],
+          ),
+          false,
+        )),
+      ],
+    );
+  }
+
+  void _shareProgress(bool isMilestone) async {
+    final String shareText = isMilestone 
+      ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
+      : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
+    final String shareUrl = "https://app.myfitvacation.com";
+    final Uri emailUri = Uri.parse('mailto:?subject=My Bali Alignment Streak&body=$shareText $shareUrl');
+    
+    if (await canLaunchUrl(emailUri)) {
+      await launchUrl(emailUri);
+    }
+  }
+
+  Widget _glassCard(Widget child, bool isMilestone) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(25),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(30),
+          width: MediaQuery.of(context).size.width * 0.85,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: isMilestone ? Colors.amber.withOpacity(0.5) : Colors.white.withOpacity(0.3), width: isMilestone ? 2 : 1),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 
   Widget _buildGlassBottomNav() {
     return Container(
-      margin: const EdgeInsets.all(25),
-      height: 75,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      height: 70,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(35),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: BottomNavigationBar(
             currentIndex: _selectedTab,
             onTap: (index) => setState(() => _selectedTab = index),
             backgroundColor: Colors.white.withOpacity(0.1),
-            selectedItemColor: const Color(0xFF004D40),
+            selectedItemColor: const Color(0xFF008080),
+            unselectedItemColor: Colors.white60,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            type: BottomNavigationBarType.fixed,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
               BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Library"),
+              BottomNavigationBarItem(icon: Icon(Icons.add_to_home_screen_rounded), label: "Install"),
             ],
           ),
         ),
