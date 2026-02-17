@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Required for streaks
 import 'dart:ui';
 import 'dart:math';
-import 'dart:async'; // Added for the stretch timer
+import 'dart:async';
 
 void main() => runApp(const AlignPlusApp());
 
@@ -33,17 +34,21 @@ class MainAppFlow extends StatefulWidget {
 class _MainAppFlowState extends State<MainAppFlow> {
   bool _showSurvey = true; 
   int _selectedTab = 0; 
+  int _streak = 0;
   
-  String _activeTitle = "Morning Ritual";
   final String _ritualVideoUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/68815f271933f6215ec16c99.mp4';
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
-  final PageController _surveyController = PageController();
-  int _currentStep = 0;
-  final List<Map<String, dynamic>> _questions = [
-    {"q": "What is your main goal?", "options": ["Relieve Pain", "Energy", "Sleep"]},
-    {"q": "Where is your tension?", "options": ["Lower Back", "Neck", "Hips"]},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadStreak();
+  }
+
+  _loadStreak() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _streak = prefs.getInt('streak_count') ?? 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +60,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
           : Scaffold(
               extendBody: true,
               body: _selectedTab == 0 
-                ? MistRevealScreen(videoUrl: _ritualVideoUrl, imageUrl: _revealImageUrl, title: _activeTitle) 
+                ? MistRevealScreen(
+                    videoUrl: _ritualVideoUrl, 
+                    imageUrl: _revealImageUrl, 
+                    title: "Morning Ritual",
+                    currentStreak: _streak,
+                    onComplete: (newStreak) => setState(() => _streak = newStreak),
+                  ) 
                 : _buildLibraryUI(),
               bottomNavigationBar: _buildGlassBottomNav(),
             ),
@@ -63,67 +74,21 @@ class _MainAppFlowState extends State<MainAppFlow> {
     );
   }
 
+  // --- UI BUILDERS ---
   Widget _buildSurveyUI() {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF004D40), Color(0xFF008080)],
-        ),
+        gradient: LinearGradient(colors: [Color(0xFF004D40), Color(0xFF008080)]),
       ),
-      child: SafeArea(
+      child: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: LinearProgressIndicator(
-                value: (_currentStep + 1) / _questions.length,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                color: Colors.white,
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            Expanded(
-              child: PageView.builder(
-                controller: _surveyController,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _questions.length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.all(40.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_questions[index]['q'], 
-                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white), 
-                        textAlign: TextAlign.center),
-                      const SizedBox(height: 30),
-                      ...(_questions[index]['options'] as List).map((opt) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_currentStep < _questions.length - 1) {
-                              _surveyController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
-                              setState(() => _currentStep++);
-                            } else {
-                              setState(() => _showSurvey = false);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.9),
-                            foregroundColor: const Color(0xFF004D40),
-                            minimumSize: const Size(double.infinity, 65),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          ),
-                          child: Text(opt, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        ),
-                      )),
-                    ],
-                  ),
-                ),
-              ),
+            const Text("Ready to Align?", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () => setState(() => _showSurvey = false),
+              child: const Text("Start My Ritual"),
             ),
           ],
         ),
@@ -133,44 +98,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   Widget _buildLibraryUI() {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)],
-        ),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          const SizedBox(height: 60),
-          const Text("Explore Bali", style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
-          const Text("Select your ritual destination", style: TextStyle(fontSize: 16, color: Colors.black54)),
-          const SizedBox(height: 30),
-          _libCard("Lower Back Relief", "Post-work tension release"),
-          _libCard("Deep Neck Stretch", "Desk-worker recovery"),
-        ],
-      ),
-    );
-  }
-
-  Widget _libCard(String title, String subtitle) {
-    return Card(
-      elevation: 4,
-      shadowColor: Colors.black26,
-      margin: const EdgeInsets.only(bottom: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        leading: const CircleAvatar(
-          radius: 25,
-          backgroundColor: Color(0xFF008080), 
-          child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30)
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        subtitle: Text(subtitle),
-        onTap: () => setState(() => _selectedTab = 0),
-      ),
+      decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)])),
+      child: const Center(child: Text("Library coming soon...")),
     );
   }
 
@@ -187,8 +116,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
             onTap: (index) => setState(() => _selectedTab = index),
             backgroundColor: Colors.black.withOpacity(0.05),
             selectedItemColor: const Color(0xFF004D40),
-            unselectedItemColor: Colors.black38,
-            showUnselectedLabels: false,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
               BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Library"),
@@ -204,25 +131,43 @@ class MistRevealScreen extends StatefulWidget {
   final String videoUrl;
   final String imageUrl;
   final String title;
-  const MistRevealScreen({super.key, required this.videoUrl, required this.imageUrl, required this.title});
+  final int currentStreak;
+  final Function(int) onComplete;
+
+  const MistRevealScreen({
+    super.key, 
+    required this.videoUrl, 
+    required this.imageUrl, 
+    required this.title,
+    required this.currentStreak,
+    required this.onComplete,
+  });
 
   @override
   State<MistRevealScreen> createState() => _MistRevealScreenState();
 }
 
-class _MistRevealScreenState extends State<MistRevealScreen> {
+class _MistRevealScreenState extends State<MistRevealScreen> with TickerProviderStateMixin {
   late VideoPlayerController _controller;
   late ConfettiController _confetti;
+  late AnimationController _breatheController;
+  
   double _sigma = 45.0;
   int _movements = 0;
-  bool _isStretching = false; // Tracks if the button should be hidden
-  int _timerSeconds = 30; // 30-second stretch duration
+  bool _isStretching = false; 
+  int _timerSeconds = 30; 
   Timer? _stretchTimer;
 
   @override
   void initState() {
     super.initState();
     _confetti = ConfettiController(duration: const Duration(seconds: 3));
+    _breatheController = AnimationController(vsync: this, duration: const Duration(seconds: 4))
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) _breatheController.reverse();
+        else if (status == AnimationStatus.dismissed) _breatheController.forward();
+      });
+
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
       ..initialize().then((_) {
         _controller.setLooping(true);
@@ -232,132 +177,78 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
       });
   }
 
-  void _startStretch() {
-    setState(() {
-      _isStretching = true;
-      _timerSeconds = 30;
-    });
+  void _updateStreakLogic() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? lastDateStr = prefs.getString('last_completion_date');
+    final DateTime now = DateTime.now();
+    final String todayStr = "${now.year}-${now.month}-${now.day}";
 
-    _stretchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_timerSeconds > 0) {
-        setState(() {
-          _timerSeconds--;
-        });
+    int newStreak = widget.currentStreak;
+    if (lastDateStr != todayStr) {
+      if (lastDateStr != null) {
+        final DateTime lastDate = DateTime.parse(lastDateStr);
+        final int difference = now.difference(lastDate).inDays;
+        if (difference == 1) newStreak++;
+        else if (difference > 1) newStreak = 1;
       } else {
+        newStreak = 1;
+      }
+      await prefs.setInt('streak_count', newStreak);
+      await prefs.setString('last_completion_date', todayStr);
+      widget.onComplete(newStreak);
+    }
+  }
+
+  void _startStretch() {
+    setState(() { _isStretching = true; _timerSeconds = 30; });
+    _breatheController.forward();
+    _stretchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_timerSeconds > 0) setState(() => _timerSeconds--);
+      else {
         _stretchTimer?.cancel();
+        _breatheController.stop();
         setState(() {
-          _isStretching = false; // Show button again
+          _isStretching = false; 
           _movements++;
           _sigma = (45.0 - (_movements * 9.0)).clamp(0, 45);
-          if (_movements == 5) _confetti.play();
+          if (_movements == 5) {
+            _confetti.play();
+            _updateStreakLogic();
+          }
         });
       }
     });
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    _confetti.dispose();
-    _stretchTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _launchRewardLink() async {
-    final Uri url = Uri.parse('https://www.myfitvacation.com/align-rewards-page');
-    if (!await launchUrl(url)) throw Exception('Could not launch $url');
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(
-          child: _controller.value.isInitialized
-              ? VideoPlayer(_controller)
-              : Image.network(widget.imageUrl, fit: BoxFit.cover),
-        ),
-        
-        IgnorePointer(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 1000),
-              color: Colors.white.withOpacity(_movements == 5 ? 0.0 : 0.8),
-            ),
-          ),
-        ),
-
+        Positioned.fill(child: _controller.value.isInitialized ? VideoPlayer(_controller) : Image.network(widget.imageUrl, fit: BoxFit.cover)),
+        IgnorePointer(child: BackdropFilter(filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma), child: AnimatedContainer(duration: const Duration(milliseconds: 1000), color: Colors.white.withOpacity(_movements == 5 ? 0.0 : 0.8)))),
         Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
-
         SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 40),
-              Text(widget.title.toUpperCase(), 
-                style: const TextStyle(fontSize: 14, letterSpacing: 4, fontWeight: FontWeight.bold, color: Color(0xFF008080))),
+              Text(widget.title.toUpperCase(), style: const TextStyle(fontSize: 14, letterSpacing: 4, fontWeight: FontWeight.bold, color: Color(0xFF008080))),
               const Spacer(),
-              
-              // Animated Visibility for the Action Card
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 500),
-                opacity: _isStretching ? 0.0 : 1.0,
-                child: AbsorbPointer(
-                  absorbing: _isStretching,
-                  child: Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.white.withOpacity(0.4)),
-                          ),
-                          child: Column(
-                            children: [
-                              Text("${_movements}/5", style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Color(0xFF004D40))),
-                              const SizedBox(height: 10),
-                              const Text("ALIGNMENT PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 30),
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (_movements < 5) {
-                                    _startStretch();
-                                  } else {
-                                    _launchRewardLink();
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF008080),
-                                  foregroundColor: Colors.white,
-                                  elevation: 5,
-                                  minimumSize: const Size(double.infinity, 60),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                                ),
-                                child: Text(_movements == 5 ? "CLAIM REWARD 🎁" : "BEGIN STRETCH ✅", 
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+              if (_isStretching) _buildBreatheUI(),
+              Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.25), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.4))),
+                      child: Opacity(opacity: _isStretching ? 0.0 : 1.0, child: _movements == 5 ? _buildSummaryUI() : _buildActionUI()),
                     ),
                   ),
                 ),
               ),
-              
-              // Optional: Show a subtle countdown timer if stretching
-              if (_isStretching) 
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 120),
-                  child: Text("Hold for $_timerSeconds seconds", 
-                    style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
-                ),
-              
               const SizedBox(height: 100),
             ],
           ),
@@ -365,4 +256,52 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
       ],
     );
   }
+
+  Widget _buildBreatheUI() {
+    return Center(
+      child: FadeTransition(
+        opacity: _breatheController,
+        child: Column(
+          children: [
+            Text(_breatheController.value > 0.5 ? "Breathe Out..." : "Breathe In...", style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300, shadows: [Shadow(blurRadius: 15, color: Colors.black54)])),
+            Text("$_timerSeconds", style: const TextStyle(fontSize: 60, color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionUI() {
+    return Column(
+      children: [
+        Text("${_movements}/5", style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Color(0xFF004D40))),
+        const Text("ALIGNMENT PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 30),
+        ElevatedButton(onPressed: _startStretch, child: const Text("BEGIN STRETCH ✅")),
+      ],
+    );
+  }
+
+  Widget _buildSummaryUI() {
+    return Column(
+      children: [
+        const Text("SESSION COMPLETE", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _stat("2.5", "MINUTES"),
+            _stat("${widget.currentStreak}", "DAY STREAK 🔥"),
+          ],
+        ),
+        const SizedBox(height: 30),
+        ElevatedButton(onPressed: () => launchUrl(Uri.parse('https://www.myfitvacation.com/align-rewards-page')), child: const Text("CLAIM REWARD 🎁")),
+      ],
+    );
+  }
+
+  Widget _stat(String val, String label) => Column(children: [Text(val, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)), Text(label, style: const TextStyle(fontSize: 10))]);
+
+  @override
+  void dispose() { _controller.dispose(); _confetti.dispose(); _breatheController.dispose(); _stretchTimer?.cancel(); super.dispose(); }
 }
