@@ -103,9 +103,70 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Widget _buildLibraryUI() {
-    return Container(
-      decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)])),
-      child: const Center(child: Text("Explore Bali soon...", style: TextStyle(color: Color(0xFF004D40), fontSize: 20))),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Image.network(
+            _revealImageUrl,
+            fit: BoxFit.cover,
+          ),
+        ),
+        Center(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(30),
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Bali Library",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        shadows: [Shadow(blurRadius: 10, color: Colors.black38)],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Current Streak: $_streak Days 🔥",
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(height: 25),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        final String shareText = "I'm on a $_streak-day morning alignment streak with align+ 🌴✨ Join me at app.myfitvacation.com";
+                        launchUrl(Uri.parse('mailto:?subject=My Bali Alignment Streak&body=$shareText'));
+                      },
+                      icon: const Icon(Icons.share_rounded),
+                      label: const Text("SHARE STREAK"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF008080),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Full Library Coming Soon",
+                      style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -219,10 +280,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
           child: Image.network(
             _movements == 5 ? widget.imageUrl : widget.gifUrl, 
             fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return const Center(child: CircularProgressIndicator(color: Color(0xFF008080)));
-            },
           ),
         ),
         Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
@@ -230,27 +287,22 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
           child: Column(
             children: [
               const SizedBox(height: 40),
-              Text(widget.title.toUpperCase(), style: const TextStyle(fontSize: 14, letterSpacing: 4, color: Color(0xFF008080), fontWeight: FontWeight.bold)),
+              Text(widget.title.toUpperCase(), 
+                style: const TextStyle(fontSize: 14, letterSpacing: 4, color: Color(0xFF008080), fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.white)])),
               const Spacer(),
               if (_isStretching) _buildBreatheUI(),
               Padding(
                 padding: const EdgeInsets.all(30.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.25),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.4)),
-                      ),
-                      child: Opacity(
-                        opacity: _isStretching ? 0.0 : 1.0,
-                        child: _movements == 5 ? _buildSummaryUI() : _buildActionUI(),
-                      ),
-                    ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.85), 
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.4)),
+                  ),
+                  child: Opacity(
+                    opacity: _isStretching ? 0.0 : 1.0,
+                    child: _movements == 5 ? _buildSummaryUI() : _buildActionUI(),
                   ),
                 ),
               ),
@@ -268,8 +320,8 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
       child: Column(
         children: [
           Text(_breatheController.value > 0.5 ? "Breathe Out..." : "Breathe In...", 
-            style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300, shadows: [Shadow(blurRadius: 10, color: Colors.black26)])),
-          Text("$_timerSeconds", style: const TextStyle(fontSize: 60, color: Colors.white, fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300, shadows: [Shadow(blurRadius: 15, color: Colors.black45)])),
+          Text("$_timerSeconds", style: const TextStyle(fontSize: 60, color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 15, color: Colors.black45)])),
         ],
       ),
     );
