@@ -4,6 +4,7 @@ import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import 'dart:math';
+import 'dart:async'; // Added for the stretch timer
 
 void main() => runApp(const AlignPlusApp());
 
@@ -34,7 +35,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0; 
   
   String _activeTitle = "Morning Ritual";
-  // Updated with your new video placeholder link
   final String _ritualVideoUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/68815f271933f6215ec16c99.mp4';
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
@@ -62,8 +62,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
       ),
     );
   }
-
-  // --- UI BUILDER METHODS WITH ENHANCED BACKGROUNDS ---
 
   Widget _buildSurveyUI() {
     return Container(
@@ -217,6 +215,9 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
   late ConfettiController _confetti;
   double _sigma = 45.0;
   int _movements = 0;
+  bool _isStretching = false; // Tracks if the button should be hidden
+  int _timerSeconds = 30; // 30-second stretch duration
+  Timer? _stretchTimer;
 
   @override
   void initState() {
@@ -231,15 +232,38 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
       });
   }
 
+  void _startStretch() {
+    setState(() {
+      _isStretching = true;
+      _timerSeconds = 30;
+    });
+
+    _stretchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_timerSeconds > 0) {
+        setState(() {
+          _timerSeconds--;
+        });
+      } else {
+        _stretchTimer?.cancel();
+        setState(() {
+          _isStretching = false; // Show button again
+          _movements++;
+          _sigma = (45.0 - (_movements * 9.0)).clamp(0, 45);
+          if (_movements == 5) _confetti.play();
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     _confetti.dispose();
+    _stretchTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _launchRewardLink() async {
-    // UPDATED: Points to the specific GHL Rewards Page
     final Uri url = Uri.parse('https://www.myfitvacation.com/align-rewards-page');
     if (!await launchUrl(url)) throw Exception('Could not launch $url');
   }
@@ -273,53 +297,67 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
               Text(widget.title.toUpperCase(), 
                 style: const TextStyle(fontSize: 14, letterSpacing: 4, fontWeight: FontWeight.bold, color: Color(0xFF008080))),
               const Spacer(),
-              Padding(
-                padding: const EdgeInsets.all(30.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.white.withOpacity(0.4)),
-                      ),
-                      child: Column(
-                        children: [
-                          Text("${_movements}/5", style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Color(0xFF004D40))),
-                          const SizedBox(height: 10),
-                          const Text("ALIGNMENT PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 30),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (_movements < 5) {
-                                setState(() {
-                                  _movements++;
-                                  _sigma = (45.0 - (_movements * 9.0)).clamp(0, 45);
-                                  if (_movements == 5) _confetti.play();
-                                });
-                              } else {
-                                _launchRewardLink();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF008080),
-                              foregroundColor: Colors.white,
-                              elevation: 5,
-                              minimumSize: const Size(double.infinity, 60),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                            ),
-                            child: Text(_movements == 5 ? "CLAIM REWARD 🎁" : "I'M ALIGNED ✅", 
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              
+              // Animated Visibility for the Action Card
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 500),
+                opacity: _isStretching ? 0.0 : 1.0,
+                child: AbsorbPointer(
+                  absorbing: _isStretching,
+                  child: Padding(
+                    padding: const EdgeInsets.all(30.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.white.withOpacity(0.4)),
                           ),
-                        ],
+                          child: Column(
+                            children: [
+                              Text("${_movements}/5", style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Color(0xFF004D40))),
+                              const SizedBox(height: 10),
+                              const Text("ALIGNMENT PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 30),
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (_movements < 5) {
+                                    _startStretch();
+                                  } else {
+                                    _launchRewardLink();
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF008080),
+                                  foregroundColor: Colors.white,
+                                  elevation: 5,
+                                  minimumSize: const Size(double.infinity, 60),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                                ),
+                                child: Text(_movements == 5 ? "CLAIM REWARD 🎁" : "BEGIN STRETCH ✅", 
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              
+              // Optional: Show a subtle countdown timer if stretching
+              if (_isStretching) 
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 120),
+                  child: Text("Hold for $_timerSeconds seconds", 
+                    style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+                ),
+              
               const SizedBox(height: 100),
             ],
           ),
