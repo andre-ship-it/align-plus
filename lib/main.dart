@@ -39,6 +39,10 @@ class _MainAppFlowState extends State<MainAppFlow> {
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994079954da040a6970fcb2.gif'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
+  // Rotation data for the 30-Day Reset
+  final List<String> _locations = ["Ubud Jungle", "Uluwatu Cliffs", "Seminyak Beach", "Canggu Rice Fields", "Nusa Penida", "Amed Coast", "Sidemen Valley"];
+  final List<String> _stretches = ["Neck & Shoulders", "Lower Back Relief", "Hip Openers", "Full Body Flow", "Chest & Heart Opener", "Spinal Twist", "Hamstring Length"];
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +66,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   Widget _buildSurveyUI() {
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(colors: [Color(0xFF004D40), Color(0xFF008080)]),
       ),
@@ -101,7 +107,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
         return MistRevealScreen(
           gifUrl: _ritualGifUrl, 
           imageUrl: _revealImageUrl, 
-          title: "Morning Ritual",
+          title: _streak < 30 ? "Day ${_streak + 1}: ${_stretches[_streak % 7]}" : "Ritual Complete",
           currentStreak: _streak,
           onComplete: (newStreak) => setState(() => _streak = newStreak),
         );
@@ -128,9 +134,10 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 child: GridView.builder(
                   padding: const EdgeInsets.fromLTRB(25, 30, 25, 120),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
+                    crossAxisCount: 2, // Changed to 2 for better readability of guidance text
                     mainAxisSpacing: 15,
                     crossAxisSpacing: 15,
+                    childAspectRatio: 1.2,
                   ),
                   itemCount: 30,
                   itemBuilder: (context, index) {
@@ -149,28 +156,40 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Widget _buildMilestoneTile(int day, bool isCompleted, bool isNext) {
+    String location = _locations[(day - 1) % 7];
+    String focus = _stretches[(day - 1) % 7];
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(15),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Container(
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isCompleted ? const Color(0xFF008080).withOpacity(0.6) : Colors.white.withOpacity(0.15),
+            color: isCompleted ? const Color(0xFF008080).withOpacity(0.7) : Colors.white.withOpacity(0.15),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: isNext ? Colors.white : (isCompleted ? const Color(0xFFB2DFDB) : Colors.white.withOpacity(0.2)),
               width: isNext ? 2 : 1,
             ),
           ),
-          child: Center(
-            child: Text(
-              "$day",
-              style: TextStyle(
-                color: Colors.white.withOpacity(isCompleted || isNext ? 1.0 : 0.5),
-                fontSize: 18,
-                fontWeight: isCompleted || isNext ? FontWeight.bold : FontWeight.normal,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("DAY $day", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  if (isCompleted) const Icon(Icons.check_circle, color: Colors.white, size: 14),
+                ],
               ),
-            ),
+              const Spacer(),
+              Text(location, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14, fontWeight: FontWeight.bold)),
+              Text(focus, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
+            ],
           ),
         ),
       ),
@@ -216,22 +235,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
     );
   }
 
-  void _shareProgress(bool isMilestone) async {
-    final String shareText = isMilestone 
-      ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
-      : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
-    const String shareUrl = "https://app.myfitvacation.com";
-
-    Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Streak copied! Paste into Instagram or X 🌴✨"),
-        backgroundColor: Color(0xFF008080),
-        duration: Duration(seconds: 4),
-      ),
-    );
-  }
-
   Widget _glassCard(Widget child, bool isMilestone) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(25),
@@ -240,6 +243,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
         child: Container(
           padding: const EdgeInsets.all(30),
           width: MediaQuery.of(context).size.width * 0.85,
+          constraints: const BoxConstraints(maxWidth: 500),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(25),
@@ -255,6 +259,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
       height: 70,
+      constraints: const BoxConstraints(maxWidth: 600),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(35),
         child: BackdropFilter(
@@ -362,10 +367,12 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(
+        // Forces visibility on Desktop by filling parent stack
+        SizedBox.expand(
           child: Image.network(
             _movements == 5 ? widget.imageUrl : widget.gifUrl, 
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(color: Colors.black),
           ),
         ),
         Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
@@ -380,6 +387,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
               Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: Container(
+                  constraints: const BoxConstraints(maxWidth: 500),
                   padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.85), 
