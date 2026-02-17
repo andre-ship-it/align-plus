@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:ui' as ui; // Added for Image Generation
+import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
 
@@ -36,6 +36,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0; 
   int _streak = 0;
   
+  // Official Bali Assets
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994079954da040a6970fcb2.gif'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
@@ -123,7 +124,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(isMilestone ? "MILESTONE ACHIEVED! 🏆" : "Bali Library", 
+              Text(isMilestone ? "MILESTONE ACHIEVED! 🏆" : "Reset Library", 
                 style: TextStyle(color: isMilestone ? Colors.amber[100] : Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 15),
               Text("$_streak DAY STREAK 🔥", 
@@ -137,7 +138,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
               ElevatedButton.icon(
                 onPressed: () => _shareProgress(isMilestone),
                 icon: const Icon(Icons.ios_share_rounded),
-                label: Text(isMilestone ? "GENERATE SHARE CARD" : "SHARE PROGRESS"),
+                label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE PROGRESS"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080), 
                   foregroundColor: Colors.white,
@@ -172,7 +173,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 onPressed: () {
                   Clipboard.setData(const ClipboardData(text: "https://app.myfitvacation.com"));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Invite link copied to clipboard! 📋"), duration: Duration(seconds: 2)),
+                    const SnackBar(content: Text("Invite link copied to clipboard! 📋")),
                   );
                 },
                 icon: const Icon(Icons.copy_rounded),
@@ -185,7 +186,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text("Your ritual is now one tap away.", style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
+              const Text("One tap to start your ritual.", style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
             ],
           ),
           false,
@@ -196,22 +197,15 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   void _shareProgress(bool isMilestone) async {
     final String shareText = isMilestone 
-      ? "Milestone Achieved! I've reached a $_streak-day morning alignment streak with align+ 🌴✨"
+      ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
       : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
-    final String shareUrl = "https://app.myfitvacation.com";
+    const String shareUrl = "https://app.myfitvacation.com";
 
-    // UNIVERSAL SHARE: Copy to clipboard and notify user
-    Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
-    
+    Clipboard.setData(const ClipboardData(text: "$shareText $shareUrl"));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Cinematic card copied! Paste into Instagram 🌴✨"),
-        backgroundColor: Color(0xFF008080),
-        duration: Duration(seconds: 4),
-      ),
+      const SnackBar(content: Text("Streak copied! Paste into Instagram or X 🌴✨"), backgroundColor: Color(0xFF008080)),
     );
     
-    // Attempt to open native share if available (Web Share API)
     final Uri genericShare = Uri.parse('https://app.myfitvacation.com');
     await launchUrl(genericShare, mode: LaunchMode.externalApplication);
   }
