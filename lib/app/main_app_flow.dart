@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 
-// Your core ritual feature
+// Ensure this matches your directory: lib/features/ritual/mist_reveal_screen.dart
 import '../features/ritual/mist_reveal_screen.dart'; 
 
 class MainAppFlow extends StatefulWidget {
@@ -21,11 +21,11 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _streak = 0;
   int _giveawayEntries = 0;
 
-  // Asset URLs
+  // Updated Rehabilitative Media
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994f4341ecd71b1446848f5.gif';
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
-  // 30-Day Program Data
+  // Rehabilitative Therapy Content
   final List<String> _locations = [
     "Ubud Jungle Sanctuary", "Uluwatu Cliffside", "Seminyak Shoreline", 
     "Canggu Zen Garden", "Nusa Penida Peak", "Amed Volcanic Coast", "Sidemen Healing Valley"
@@ -58,6 +58,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   void _calculateEntries(int streak) {
+    // 1 entry per day + tiered bonuses for retention
     int baseEntries = streak;
     int bonus = 0;
     if (streak >= 7) bonus += 10;
@@ -243,7 +244,10 @@ class _MainAppFlowState extends State<MainAppFlow> {
           decoration: BoxDecoration(
             color: isComp ? const Color(0xFF008080).withOpacity(0.7) : Colors.white.withOpacity(0.1),
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: isNext ? Colors.white : (isBonusDay ? Colors.amberAccent : Colors.white.withOpacity(0.2)), width: isNext ? 2 : 1),
+            border: Border.all(
+              color: isNext ? Colors.white : (isBonusDay ? Colors.amberAccent : Colors.white.withOpacity(0.2)), 
+              width: isNext || isBonusDay ? 2 : 1
+            ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
