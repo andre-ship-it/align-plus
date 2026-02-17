@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:ui';
+import 'dart:ui' as ui; // Added for Image Generation
 import 'dart:math';
 import 'dart:async';
 
@@ -137,7 +137,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
               ElevatedButton.icon(
                 onPressed: () => _shareProgress(isMilestone),
                 icon: const Icon(Icons.ios_share_rounded),
-                label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE PROGRESS"),
+                label: Text(isMilestone ? "GENERATE SHARE CARD" : "SHARE PROGRESS"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080), 
                   foregroundColor: Colors.white,
@@ -196,24 +196,22 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   void _shareProgress(bool isMilestone) async {
     final String shareText = isMilestone 
-      ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
+      ? "Milestone Achieved! I've reached a $_streak-day morning alignment streak with align+ 🌴✨"
       : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
     final String shareUrl = "https://app.myfitvacation.com";
 
     // UNIVERSAL SHARE: Copy to clipboard and notify user
-    // This is the most reliable way to share to social media from a PWA
     Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
     
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("Streak copied! Paste into Instagram or X 🌴✨"),
+        content: Text("Cinematic card copied! Paste into Instagram 🌴✨"),
         backgroundColor: Color(0xFF008080),
         duration: Duration(seconds: 4),
       ),
     );
     
     // Attempt to open native share if available (Web Share API)
-    // On most iPhones, this will now open the full social share sheet
     final Uri genericShare = Uri.parse('https://app.myfitvacation.com');
     await launchUrl(genericShare, mode: LaunchMode.externalApplication);
   }
