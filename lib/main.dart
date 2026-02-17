@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,8 +35,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0; 
   int _streak = 0;
   
-  // Use a GIF here instead of MP4 for maximum mobile stability
-  final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg'; 
+  // IMPLEMENTED: Official Bali Stretch GIF
+  final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994079954da040a6970fcb2.gif'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
   @override
@@ -75,8 +74,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () => setState(() => _showSurvey = false),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(200, 60)),
-              child: const Text("Start My Ritual"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF008080),
+                minimumSize: const Size(220, 65),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+              ),
+              child: const Text("Start My Ritual", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -103,7 +107,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   Widget _buildLibraryUI() {
     return Container(
       decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)])),
-      child: const Center(child: Text("Library coming soon...")),
+      child: const Center(child: Text("Explore Bali soon...", style: TextStyle(color: Color(0xFF004D40), fontSize: 20))),
     );
   }
 
@@ -221,7 +225,8 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.network(widget.gifUrl, fit: BoxFit.cover),
+          child: Image.network(widget.gifUrl, fit: BoxFit.cover, 
+            errorBuilder: (context, error, stackTrace) => Image.network(widget.imageUrl, fit: BoxFit.cover)),
         ),
         IgnorePointer(
           child: BackdropFilter(
@@ -246,8 +251,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
                   borderRadius: BorderRadius.circular(30),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 500),
+                    child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.25),
@@ -276,7 +280,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
       child: Column(
         children: [
           Text(_breatheController.value > 0.5 ? "Breathe Out..." : "Breathe In...", 
-            style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300)),
+            style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300, shadows: [Shadow(blurRadius: 10, color: Colors.black26)])),
           Text("$_timerSeconds", style: const TextStyle(fontSize: 60, color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       ),
@@ -289,7 +293,16 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         Text("${_movements}/5", style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Color(0xFF004D40))),
         const Text("STRETCH PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
         const SizedBox(height: 30),
-        ElevatedButton(onPressed: _startStretch, child: const Text("BEGIN STRETCH ✅")),
+        ElevatedButton(
+          onPressed: _startStretch, 
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF008080),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 60),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+          ),
+          child: const Text("BEGIN STRETCH ✅", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
       ],
     );
   }
@@ -310,11 +323,15 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         ElevatedButton(
           onPressed: () async {
             final Uri url = Uri.parse('https://www.myfitvacation.com/align-rewards-page');
-            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-              throw Exception('Could not launch $url');
-            }
+            await launchUrl(url, mode: LaunchMode.externalApplication);
           }, 
-          child: const Text("CLAIM REWARD 🎁"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orangeAccent,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 60),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+          ),
+          child: const Text("CLAIM REWARD 🎁", style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
     );
