@@ -33,12 +33,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
   bool _showSurvey = true; 
   int _selectedTab = 0; 
   
-  // Ritual Configuration
   String _activeTitle = "Morning Ritual";
-  // The new GHL Image link you provided
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
-  // Survey Data
   final PageController _surveyController = PageController();
   int _currentStep = 0;
   final List<Map<String, dynamic>> _questions = [
@@ -201,7 +198,8 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
   }
 
   Future<void> _launchRewardLink() async {
-    final Uri url = Uri.parse('https://myfitvacation.com/align-rewards');
+    // UPDATED: Now points to your HotelPlanner portal
+    final Uri url = Uri.parse('https://myfitvacation.hotelplanner.com/');
     if (!await launchUrl(url)) throw Exception('Could not launch $url');
   }
 
@@ -209,12 +207,9 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // THE REVEAL IMAGE (Your GHL Link)
         Positioned.fill(
           child: Image.network(widget.imageUrl, fit: BoxFit.cover),
         ),
-        
-        // THE MIST
         IgnorePointer(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
@@ -224,16 +219,13 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
             ),
           ),
         ),
-
         Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
-
         SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 40),
               Text(widget.title.toUpperCase(), style: const TextStyle(fontSize: 14, letterSpacing: 4, fontWeight: FontWeight.bold, color: Color(0xFF008080))),
               const Spacer(),
-              
               Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: ClipRRect(
