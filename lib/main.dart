@@ -8,9 +8,6 @@ import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
 
-// Safe conditional import
-import 'dart:html' as html if (dart.library.io) 'package:flutter/material.dart';
-
 void main() => runApp(const AlignPlusApp());
 
 class AlignPlusApp extends StatelessWidget {
@@ -47,35 +44,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   void initState() {
     super.initState();
     _loadStreak();
-    if (kIsWeb) {
-      Future.delayed(const Duration(seconds: 2), () => _safePwaCheck());
-    }
-  }
-
-  void _safePwaCheck() {
-    try {
-      final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
-                                (html.window.navigator as dynamic).standalone == true;
-      final bool isIOS = html.window.navigator.userAgent.toLowerCase().contains('iphone');
-      if (isIOS && !isStandalone) {
-        _showPWAInstallModal();
-      }
-    } catch (e) {
-      debugPrint("PWA check skipped: $e");
-    }
-  }
-
-  void _showPWAInstallModal() {
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Install align+"),
-        content: const Text("Add to Home Screen for the full Bali experience! \n\n1. Tap Share\n2. Add to Home Screen"),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Got it"))],
-      ),
-    );
   }
 
   _loadStreak() async {
@@ -193,7 +161,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   bool _isStretching = false; 
   int _timerSeconds = 30; 
   Timer? _stretchTimer;
-  bool _videoInitialized = false;
+  bool _videoReady = false;
 
   @override
   void initState() {
@@ -205,25 +173,23 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         else if (status == AnimationStatus.dismissed) _breatheController.forward();
       });
     
-    // Safety delay for video boot
-    Future.delayed(const Duration(milliseconds: 500), () => _initVideo());
+    _initVideoSafely();
   }
 
-  void _initVideo() {
+  Future<void> _initVideoSafely() async {
     try {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-        ..initialize().then((_) {
-          if (mounted) {
-            _controller?.setLooping(true);
-            _controller?.setVolume(0);
-            _controller?.play();
-            setState(() => _videoInitialized = true);
-          }
-        }).catchError((error) {
-          debugPrint("Video initialization failed, staying on image: $error");
+      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      await _controller!.initialize();
+      if (mounted) {
+        setState(() {
+          _videoReady = true;
+          _controller!.setLooping(true);
+          _controller!.setVolume(0);
+          _controller!.play();
         });
+      }
     } catch (e) {
-      debugPrint("Video error caught: $e");
+      debugPrint("Video failed to load: $e");
     }
   }
 
@@ -276,7 +242,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     return Stack(
       children: [
         Positioned.fill(
-          child: (_videoInitialized && _controller != null && _controller!.value.isInitialized)
+          child: (_videoReady && _controller != null && _controller!.value.isInitialized)
               ? VideoPlayer(_controller!)
               : Image.network(widget.imageUrl, fit: BoxFit.cover),
         ),
@@ -365,7 +331,12 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         ),
         const SizedBox(height: 30),
         ElevatedButton(
-          onPressed: () => launchUrl(Uri.parse('https://www.myfitvacation.com/align-rewards-page')), 
+          onPressed: () async {
+            final Uri url = Uri.parse('https://www.myfitvacation.com/align-rewards-page');
+            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+              throw Exception('Could not launch $url');
+            }
+          }, 
           child: const Text("CLAIM REWARD 🎁"),
         ),
       ],
