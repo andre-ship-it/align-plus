@@ -1,33 +1,20 @@
-import 'dart:math';
-import 'dart:ui';
-import 'dart:async';
-
-import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
-
-import '../../app/theme.dart';
-import '../../shared/widgets/press_scale_button.dart';
+import 'dart:ui';
 
 class MistRevealScreen extends StatefulWidget {
-  static const String _rewardBaseUrl = String.fromEnvironment(
-    'GHL_REWARD_URL',
-    defaultValue: 'https://example.com/claim',
-  );
-
-  final String videoUrl;
+  final String gifUrl; // The rehabilitative movement video
+  final String imageUrl; // The background Bali image
   final String title;
-  final String userGoal;
-  final Future<void> Function() onMistFullyCleared;
+  final int currentStreak;
+  final Function(int) onComplete;
 
   const MistRevealScreen({
     super.key,
-    required this.videoUrl,
+    required this.gifUrl,
+    required this.imageUrl,
     required this.title,
-    required this.userGoal,
-    required this.onMistFullyCleared,
+    required this.currentStreak,
+    required this.onComplete,
   });
 
   @override
@@ -35,136 +22,89 @@ class MistRevealScreen extends StatefulWidget {
 }
 
 class _MistRevealScreenState extends State<MistRevealScreen> {
-  late VideoPlayerController _controller;
-  late ConfettiController _confetti;
-  double _sigma = 45;
-  double _mistOpacity = 1;
-  int _movements = 0;
+  double _opacity = 1.0;
+  bool _isFinished = false;
 
-  Future<void> _launchRewardUrl() async {
-    final base = Uri.parse(MistRevealScreen._rewardBaseUrl);
-    final query = Map<String, String>.from(base.queryParameters);
-    query['source'] = 'align_app';
-    query['goal'] = widget.userGoal.toLowerCase().replaceAll(' ', '_');
-    final uri = base.replace(queryParameters: query);
-
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  void _onRevealUpdate(double value) {
+    setState(() {
+      _opacity = value;
+      if (_opacity <= 0.1 && !_isFinished) {
+        _isFinished = true;
+        _handleCompletion();
+      }
+    });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _confetti = ConfettiController(duration: const Duration(seconds: 2));
-    _initVideo();
-  }
-
-  void _initVideo() {
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-      ..initialize().then((_) {
-        _controller
-          ..setLooping(true)
-          ..setVolume(0)
-          ..play();
-        if (mounted) {
-          setState(() {});
-        }
-      });
-  }
-
-  @override
-  void didUpdateWidget(covariant MistRevealScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.videoUrl != widget.videoUrl) {
-      _controller.dispose();
-      _sigma = 45;
-      _mistOpacity = 0;
-      _movements = 0;
-      _initVideo();
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          setState(() => _mistOpacity = 1);
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _confetti.dispose();
-    super.dispose();
+  void _handleCompletion() {
+    // Increment the streak and trigger the callback
+    widget.onComplete(widget.currentStreak + 1);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: _controller.value.isInitialized
-              ? VideoPlayer(_controller)
-              : Container(color: Colors.black),
-        ),
-        IgnorePointer(
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 950),
-            curve: Curves.easeInOutCubic,
-            opacity: _mistOpacity,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
-              child: Container(color: Colors.white.withOpacity(0.85)),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // The Movement Video (Gif)
+          Center(
+            child: Image.network(
+              widget.gifUrl,
+              fit: BoxFit.contain,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const CircularProgressIndicator(color: Color(0xFF008080));
+              },
             ),
           ),
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confetti,
-            blastDirection: pi / 2,
-          ),
-        ),
-        SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              Text(
-                widget.title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: AppPalette.deepTeal),
-              ),
-              const Spacer(),
-              PressScaleButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    if (_movements < 5) {
-                      _movements++;
-                      _sigma -= 9;
-                      if (_movements == 5) {
-                        _confetti.play();
-                        unawaited(widget.onMistFullyCleared());
-                      }
-                    }
-                  });
-                },
-                child: Text(_movements == 5 ? 'ALIGNED' : 'STRETCH DONE'),
-              ),
-              const SizedBox(height: 12),
-              PressScaleButton(
-                onPressed: _movements == 5
-                    ? () => unawaited(_launchRewardUrl())
-                    : null,
-                child: Text(
-                  _movements == 5
-                      ? 'CLAIM REWARD'
-                      : 'Complete 5 stretches to unlock reward',
+
+          // The Mist/Blur Overlay
+          IgnorePointer(
+            ignoring: _isFinished,
+            child: Opacity(
+              opacity: _opacity,
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  color: Colors.black.withOpacity(0.3),
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Georgia',
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      const Text(
+                        "Swipe down to clear the mist\nand begin your ritual",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 40),
-            ],
+            ),
           ),
-        ),
-      ],
+
+          // Gesture Detector for the Reveal
+          if (!_isFinished)
+            GestureDetector(
+              onVerticalDragUpdate: (details) {
+                // Logic to reduce opacity as user swipes down
+                double newOpacity = _opacity - (details.primaryDelta! / 300);
+                _onRevealUpdate(newOpacity.clamp(0.0, 1.0));
+              },
+            ),
+        ],
+      ),
     );
   }
 }
