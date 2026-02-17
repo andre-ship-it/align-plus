@@ -113,7 +113,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
       case 1:
         return _buildLibraryUI();
       case 2:
-        return _buildShareUI(); // New Share Subcard
+        return _buildShareUI(); 
       case 3:
         return _buildInstallUI();
       default:
