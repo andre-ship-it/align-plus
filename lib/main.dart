@@ -35,7 +35,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0; 
   int _streak = 0;
   
-  // IMPLEMENTED: Official Bali Stretch GIF
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994079954da040a6970fcb2.gif'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
@@ -62,7 +61,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   Widget _buildSurveyUI() {
     return Container(
-      key: const ValueKey('survey'),
       decoration: const BoxDecoration(
         gradient: LinearGradient(colors: [Color(0xFF004D40), Color(0xFF008080)]),
       ),
@@ -158,8 +156,6 @@ class MistRevealScreen extends StatefulWidget {
 class _MistRevealScreenState extends State<MistRevealScreen> with TickerProviderStateMixin {
   late ConfettiController _confetti;
   late AnimationController _breatheController;
-  
-  double _sigma = 45.0;
   int _movements = 0;
   bool _isStretching = false; 
   int _timerSeconds = 30; 
@@ -188,7 +184,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         setState(() {
           _isStretching = false; 
           _movements++;
-          _sigma = (45.0 - (_movements * 9.0)).clamp(0, 45);
           if (_movements == 5) {
             _confetti.play();
             _updateStreak();
@@ -203,17 +198,13 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     final today = DateTime.now();
     final todayStr = "${today.year}-${today.month}-${today.day}";
     final lastDateStr = prefs.getString('last_completion_date');
-
     int newStreak = widget.currentStreak;
     if (lastDateStr != todayStr) {
       if (lastDateStr != null) {
         final lastDate = DateTime.parse(lastDateStr);
-        final diff = today.difference(lastDate).inDays;
-        if (diff == 1) newStreak++;
-        else if (diff > 1) newStreak = 1;
-      } else {
-        newStreak = 1;
-      }
+        if (today.difference(lastDate).inDays == 1) newStreak++;
+        else if (today.difference(lastDate).inDays > 1) newStreak = 1;
+      } else { newStreak = 1; }
       await prefs.setInt('streak_count', newStreak);
       await prefs.setString('last_completion_date', todayStr);
       widget.onComplete(newStreak);
@@ -225,16 +216,13 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.network(widget.gifUrl, fit: BoxFit.cover, 
-            errorBuilder: (context, error, stackTrace) => Image.network(widget.imageUrl, fit: BoxFit.cover)),
-        ),
-        IgnorePointer(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 1000),
-              color: Colors.white.withOpacity(_movements == 5 ? 0.0 : 0.8),
-            ),
+          child: Image.network(
+            _movements == 5 ? widget.imageUrl : widget.gifUrl, 
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(child: CircularProgressIndicator(color: Color(0xFF008080)));
+            },
           ),
         ),
         Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
