@@ -12,16 +12,12 @@ class AlignPlusApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Align+ 30-Day Reset',
+      title: 'FitWell Align+',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF008080),
-          brightness: Brightness.light,
-        ),
+        colorSchemeSeed: const Color(0xFF008080),
         fontFamily: 'Georgia',
-        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const MainAppFlow(),
     );
