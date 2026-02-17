@@ -67,7 +67,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   Widget _buildSurveyUI() {
     return Container(
-      // Enhanced Background: Deep Teal Gradient
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -240,7 +239,8 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
   }
 
   Future<void> _launchRewardLink() async {
-    final Uri url = Uri.parse('https://myfitvacation.com/align-rewards');
+    // UPDATED: Points to the specific GHL Rewards Page
+    final Uri url = Uri.parse('https://www.myfitvacation.com/align-rewards-page');
     if (!await launchUrl(url)) throw Exception('Could not launch $url');
   }
 
@@ -248,14 +248,12 @@ class _MistRevealScreenState extends State<MistRevealScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // VIDEO PLACEHOLDER BACKGROUND
         Positioned.fill(
           child: _controller.value.isInitialized
               ? VideoPlayer(_controller)
               : Image.network(widget.imageUrl, fit: BoxFit.cover),
         ),
         
-        // THE MIST
         IgnorePointer(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
