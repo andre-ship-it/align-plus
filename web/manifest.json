@@ -1,35 +1,25 @@
 {
-    "name": "align+",
+    "name": "align+ 30 Day Reset",
     "short_name": "align+",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#004D40",
     "theme_color": "#008080",
-    "description": "Daily morning rituals for Bali-inspired alignment.",
+    "description": "A 30-day cinematic morning ritual for mind and body alignment.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {
-            "src": "icons/Icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/Icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/Icon-maskable-192.png",
+            "src": "https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6920a7ff99cbb139b7aa53d4.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "maskable"
+            "purpose": "any"
         },
         {
-            "src": "icons/Icon-maskable-512.png",
+            "src": "https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6920a7ff99cbb139b7aa53d4.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "maskable"
+            "purpose": "any maskable"
         }
     ]
 }
