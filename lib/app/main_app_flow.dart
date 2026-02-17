@@ -5,9 +5,6 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 
-// Ensure this path matches your directory: lib/features/ritual/mist_reveal_screen.dart
-import '../features/ritual/mist_reveal_screen.dart'; 
-
 class MainAppFlow extends StatefulWidget {
   const MainAppFlow({super.key});
 
@@ -20,27 +17,15 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0;
   int _streak = 0;
   int _giveawayEntries = 0;
+  bool _isRitualActive = false;
 
-  // Rehabilitative Media & Links
-  final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994f4341ecd71b1446848f5.gif';
-  final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
+  final String _day1Gif = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994f4341ecd71b1446848f5.gif';
+  final String _bgImage = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
   final String _communityUrl = 'https://Align.fitwell.life';
 
-  // 30-Day Therapeutic Program Data
-  final List<String> _locations = [
-    "Ubud Jungle Sanctuary", "Uluwatu Cliffside", "Seminyak Shoreline", 
-    "Canggu Zen Garden", "Nusa Penida Peak", "Amed Volcanic Coast", "Sidemen Healing Valley"
-  ];
-
-  final List<String> _stretches = [
-    "Slow Chaturanga Flow", "Segmental Cat-Cow", "90/90 Hip Reset",
-    "Active Thoracic Cobra", "Low Lunge Psoas Reach", "Lateral QL Extension", "Deep Squat Integration"
-  ];
-
-  final List<String> _focusAreas = [
-    "Shoulder & Scapular Stability", "Lumbar Spine Decompression", "Pelvic Internal Rotation",
-    "Postural Chain Realignment", "Anterior Chain Relief", "Lateral Line Balance", "Full Body Structural Reset"
-  ];
+  final List<String> _locations = ["Ubud", "Uluwatu", "Seminyak", "Canggu", "Nusa Penida", "Amed", "Sidemen"];
+  final List<String> _stretches = ["Slow Chaturanga", "Segmental Cat-Cow", "90/90 Hip Reset", "Active Cobra", "Low Lunge Reach", "Lateral QL Extension", "Deep Squat"];
+  final List<String> _focusAreas = ["Shoulder Stability", "Lumbar Decompression", "Pelvic Rotation", "Postural Realignment", "Anterior Chain Relief", "Lateral Line Balance", "Full Body Reset"];
 
   @override
   void initState() {
@@ -55,24 +40,14 @@ class _MainAppFlowState extends State<MainAppFlow> {
       _showSurvey = prefs.getBool('survey_completed') == null;
       _calculateEntries(_streak);
     });
-    _checkFirstRun(prefs);
   }
 
   void _calculateEntries(int streak) {
-    int baseEntries = streak;
-    int bonus = 0;
-    if (streak >= 7) bonus += 10;
-    if (streak >= 15) bonus += 25;
-    if (streak >= 30) bonus += 100;
-    _giveawayEntries = baseEntries + bonus;
-  }
-
-  void _checkFirstRun(SharedPreferences prefs) {
-    bool isFirstRun = prefs.getBool('is_first_run') ?? true;
-    if (isFirstRun) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcomeDialog());
-      prefs.setBool('is_first_run', false);
-    }
+    int base = streak;
+    if (streak >= 30) base += 100;
+    else if (streak >= 15) base += 25;
+    else if (streak >= 7) base += 10;
+    setState(() => _giveawayEntries = base);
   }
 
   Future<void> _launchUrl(String url) async {
@@ -82,81 +57,12 @@ class _MainAppFlowState extends State<MainAppFlow> {
     }
   }
 
-  void _showWelcomeDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: AlertDialog(
-          backgroundColor: Colors.white.withOpacity(0.2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.auto_awesome, color: Colors.white, size: 50),
-              const SizedBox(height: 20),
-              const Text("Welcome to FitWell", textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 15),
-              const Text("Perform daily Proof-of-Work movements to earn entries for the Bali Vacation Giveaway.",
-                textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5)),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF008080), 
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                  minimumSize: const Size(200, 50)
-                ),
-                child: const Text("BEGIN REHAB"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 800),
+        duration: const Duration(milliseconds: 500),
         child: _showSurvey ? _buildSurveyUI() : _buildMainApp(),
-      ),
-    );
-  }
-
-  Widget _buildSurveyUI() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF004D40), Color(0xFF008080)]),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text("Ready to Align?", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('survey_completed', true);
-                setState(() => _showSurvey = false);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, 
-                foregroundColor: const Color(0xFF008080),
-                minimumSize: const Size(220, 65),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100))
-              ),
-              child: const Text("Start My Ritual", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -180,202 +86,148 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Widget _buildRitualUI() {
+    int dayIndex = _streak % 7;
     return Stack(
       children: [
-        SizedBox.expand(
-          child: Image.network(_revealImageUrl, fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(color: Colors.black)),
+        Positioned.fill(child: Image.network(_bgImage, fit: BoxFit.cover)),
+        Center(
+          child: _isRitualActive 
+            ? _buildActiveRitual(dayIndex) 
+            : _buildRitualLanding(dayIndex),
         ),
-        MistRevealScreen(
-          gifUrl: _ritualGifUrl, 
-          imageUrl: _revealImageUrl, 
-          title: "Entries: $_giveawayEntries | ${_stretches[_streak % 7]}",
-          currentStreak: _streak,
-          onComplete: (newStreak) async {
+      ],
+    );
+  }
+
+  Widget _buildRitualLanding(int dayIndex) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text("DAY ${_streak + 1}", style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold)),
+        Text(_stretches[dayIndex], style: const TextStyle(color: Colors.white70, fontSize: 20)),
+        const SizedBox(height: 40),
+        ElevatedButton(
+          onPressed: () => setState(() => _isRitualActive = true),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF008080), minimumSize: const Size(220, 60)),
+          child: const Text("BEGIN REHAB"),
+        )
+      ],
+    );
+  }
+
+  Widget _buildActiveRitual(int dayIndex) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Image.network(_day1Gif, height: 400, fit: BoxFit.contain),
+        ),
+        const SizedBox(height: 20),
+        Text(_stretches[dayIndex], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(_focusAreas[dayIndex], style: const TextStyle(color: Colors.white60, fontSize: 16)),
+        const SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: () async {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setInt('streak_count', newStreak);
+            int nextStreak = _streak + 1;
+            await prefs.setInt('streak_count', nextStreak);
             setState(() {
-              _streak = newStreak;
-              _calculateEntries(newStreak);
+              _streak = nextStreak;
+              _calculateEntries(nextStreak);
+              _isRitualActive = false;
             });
           },
-        ),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF008080), foregroundColor: Colors.white, minimumSize: const Size(200, 50)),
+          child: const Text("COMPLETE"),
+        )
       ],
     );
   }
 
   Widget _buildLibraryUI() {
-    return Stack(
-      children: [
-        Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
-        SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              const Text("REHABILITATION MAP", 
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(25, 30, 25, 120),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, mainAxisSpacing: 15, crossAxisSpacing: 15, childAspectRatio: 1.2),
-                  itemCount: 30,
-                  itemBuilder: (context, index) {
-                    int day = index + 1;
-                    return _buildMilestoneTile(
-                      day, 
-                      day <= _streak, 
-                      day == _streak + 1,
-                      _locations[index % 7], 
-                      _stretches[index % 7], 
-                      _focusAreas[index % 7]
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+    return Stack(children: [
+      Positioned.fill(child: Image.network(_bgImage, fit: BoxFit.cover)),
+      SafeArea(child: Column(children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Text("REHABILITATION MAP", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 2)),
         ),
-      ],
-    );
-  }
-
-  Widget _buildMilestoneTile(int day, bool isComp, bool isNext, String loc, String foc, String area) {
-    bool isBonusDay = (day == 7 || day == 15 || day == 30);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(15),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isComp ? const Color(0xFF008080).withOpacity(0.7) : Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(
-              color: isNext ? Colors.white : (isBonusDay ? Colors.amberAccent : Colors.white.withOpacity(0.2)), 
-              width: isNext || isBonusDay ? 2 : 1
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("D$day", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
-                  if (isBonusDay) const Icon(Icons.star, color: Colors.amberAccent, size: 12),
-                ],
+        Expanded(child: GridView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 15, crossAxisSpacing: 15, childAspectRatio: 1.3),
+          itemCount: 30,
+          itemBuilder: (context, index) {
+            bool isDone = index < _streak;
+            bool isNext = index == _streak;
+            return Container(
+              decoration: BoxDecoration(
+                color: isDone ? const Color(0xFF008080).withOpacity(0.8) : Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: isNext ? Colors.white : Colors.white24),
               ),
-              const Spacer(),
-              Text(foc, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-              Text(area, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 9, fontStyle: FontStyle.italic)),
-            ],
-          ),
-        ),
-      ),
-    );
+              child: Center(child: Text("Day ${index + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+            );
+          },
+        )),
+      ])),
+    ]);
   }
 
   Widget _buildShareUI() {
-    return Stack(
-      children: [
-        Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
-        Center(child: _glassCard(
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.card_giftcard, color: Colors.white, size: 48),
-              const SizedBox(height: 10),
-              const Text("Invite & Earn", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const Text("+5 entries per referral.", style: TextStyle(color: Colors.white70, fontSize: 14)),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Clipboard.setData(const ClipboardData(text: "Join the Reset on app.fitwell.life 🌴"));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Link copied! 🌴")));
-                },
-                icon: const Icon(Icons.copy_rounded),
-                label: const Text("COPY REFERRAL LINK"),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF008080), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100))),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: () => _launchUrl(_communityUrl),
-                icon: const Icon(Icons.groups_rounded),
-                label: const Text("JOIN THE COMMUNITY"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF008080), minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100))),
-              ),
-            ],
-          ),
-        )),
-      ],
-    );
+    return Stack(children: [
+      Positioned.fill(child: Image.network(_bgImage, fit: BoxFit.cover)),
+      Center(child: _glassCard(Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.card_giftcard, color: Colors.white, size: 48),
+        const SizedBox(height: 10),
+        const Text("Invite & Earn", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        const Text("+5 entries per referral.", style: TextStyle(color: Colors.white70, fontSize: 14)),
+        const SizedBox(height: 25),
+        ElevatedButton(
+          onPressed: () { Clipboard.setData(const ClipboardData(text: "Join the Reset on app.fitwell.life 🌴")); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Link copied!"))); },
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF008080), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
+          child: const Text("COPY REFERRAL LINK"),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton(
+          onPressed: () => _launchUrl(_communityUrl),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF008080), minimumSize: const Size(double.infinity, 50)),
+          child: const Text("JOIN THE COMMUNITY"),
+        ),
+      ]))),
+    ]);
   }
 
   Widget _buildInstallUI() {
-    return Stack(
-      children: [
-        Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
-        Center(child: _glassCard(
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.install_mobile_rounded, color: Colors.white, size: 48),
-              const SizedBox(height: 15),
-              const Text("FitWell App", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 15),
-              const Text("1. Tap Share\n2. Add to Home Screen", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
-            ],
-          ),
-        )),
-      ],
-    );
+    return Stack(children: [
+      Positioned.fill(child: Image.network(_bgImage, fit: BoxFit.cover)),
+      Center(child: _glassCard(Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.install_mobile_rounded, color: Colors.white, size: 48),
+        const SizedBox(height: 15),
+        const Text("FitWell App", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        const Text("1. Tap Share\n2. Add to Home Screen", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
+      ]))),
+    ]);
   }
 
   Widget _glassCard(Widget child) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(25),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(30),
-          width: MediaQuery.of(context).size.width * 0.85,
-          constraints: const BoxConstraints(maxWidth: 500),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(25), border: Border.all(color: Colors.white.withOpacity(0.3))),
-          child: child,
-        ),
-      ),
-    );
+    return ClipRRect(borderRadius: BorderRadius.circular(25), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), child: Container(padding: const EdgeInsets.all(30), width: MediaQuery.of(context).size.width * 0.85, constraints: const BoxConstraints(maxWidth: 500), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(25), border: Border.all(color: Colors.white.withOpacity(0.3))), child: child)));
   }
 
   Widget _buildGlassBottomNav() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 30),
-      height: 70,
-      constraints: const BoxConstraints(maxWidth: 700),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(35),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: BottomNavigationBar(
-            currentIndex: _selectedTab,
-            onTap: (index) => setState(() => _selectedTab = index),
-            backgroundColor: Colors.white.withOpacity(0.1),
-            selectedItemColor: const Color(0xFF008080),
-            unselectedItemColor: Colors.white60,
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-            type: BottomNavigationBarType.fixed,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
-              BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Map"),
-              BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: "Earn"),
-              BottomNavigationBarItem(icon: Icon(Icons.add_to_home_screen_rounded), label: "Install"),
-            ],
-          ),
-        ),
-      ),
-    );
+    return Container(margin: const EdgeInsets.all(20), height: 70, child: ClipRRect(borderRadius: BorderRadius.circular(35), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), child: BottomNavigationBar(currentIndex: _selectedTab, onTap: (index) => setState(() => _selectedTab = index), backgroundColor: Colors.white10, selectedItemColor: const Color(0xFF008080), unselectedItemColor: Colors.white60, showSelectedLabels: false, showUnselectedLabels: false, type: BottomNavigationBarType.fixed, items: const [
+      BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
+      BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Map"),
+      BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: "Earn"),
+      BottomNavigationBarItem(icon: Icon(Icons.add_to_home_screen_rounded), label: "Install"),
+    ]))));
+  }
+
+  Widget _buildSurveyUI() {
+    return Container(color: const Color(0xFF004D40), child: Center(child: ElevatedButton(onPressed: () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('survey_completed', true);
+      setState(() => _showSurvey = false);
+    }, child: const Text("Start 30-Day Reset"))));
   }
 }
