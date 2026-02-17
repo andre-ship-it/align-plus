@@ -33,8 +33,10 @@ class _MainAppFlowState extends State<MainAppFlow> {
   bool _showSurvey = true; 
   int _selectedTab = 0; 
   
-  String _activeVideoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-tropical-beach-with-palm-trees-1549-large.mp4';
+  // Ritual Configuration
   String _activeTitle = "Morning Ritual";
+  // The new GHL Image link you provided
+  final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
   // Survey Data
   final PageController _surveyController = PageController();
@@ -54,15 +56,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
           : Scaffold(
               extendBody: true,
               body: _selectedTab == 0 
-                ? MistRevealScreen(videoUrl: _activeVideoUrl, title: _activeTitle) 
+                ? MistRevealScreen(imageUrl: _revealImageUrl, title: _activeTitle) 
                 : _buildLibraryUI(),
               bottomNavigationBar: _buildGlassBottomNav(),
             ),
       ),
     );
   }
-
-  // --- ADDING THE MISSING METHODS ---
 
   Widget _buildSurveyUI() {
     return Container(
@@ -89,9 +89,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_questions[index]['q'], 
-                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
-                        textAlign: TextAlign.center),
+                      Text(_questions[index]['q'], style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900), textAlign: TextAlign.center),
                       const SizedBox(height: 30),
                       ...(_questions[index]['options'] as List).map((opt) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -131,15 +129,14 @@ class _MainAppFlowState extends State<MainAppFlow> {
           const SizedBox(height: 40),
           const Text("Explore Bali", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          _libCard("Lower Back Relief", "https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-beach-resort-with-palm-trees-1551-large.mp4"),
-          _libCard("Deep Neck Stretch", "https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-the-forest-1553-large.mp4"),
-          _libCard("Morning Energy Flow", "https://assets.mixkit.co/videos/preview/mixkit-tropical-beach-with-palm-trees-1549-large.mp4"),
+          _libCard("Lower Back Relief", "Post-work tension release"),
+          _libCard("Deep Neck Stretch", "Desk-worker recovery"),
         ],
       ),
     );
   }
 
-  Widget _libCard(String title, String url) {
+  Widget _libCard(String title, String subtitle) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -147,11 +144,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
         contentPadding: const EdgeInsets.all(15),
         leading: const CircleAvatar(backgroundColor: Color(0xFF008080), child: Icon(Icons.play_arrow, color: Colors.white)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        onTap: () => setState(() {
-          _activeVideoUrl = url;
-          _activeTitle = title;
-          _selectedTab = 0;
-        }),
+        subtitle: Text(subtitle),
+        onTap: () => setState(() => _selectedTab = 0),
       ),
     );
   }
@@ -180,4 +174,114 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 }
 
-// ... Rest of MistRevealScreen class from previous version ...
+class MistRevealScreen extends StatefulWidget {
+  final String imageUrl;
+  final String title;
+  const MistRevealScreen({super.key, required this.imageUrl, required this.title});
+
+  @override
+  State<MistRevealScreen> createState() => _MistRevealScreenState();
+}
+
+class _MistRevealScreenState extends State<MistRevealScreen> {
+  late ConfettiController _confetti;
+  double _sigma = 45.0;
+  int _movements = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _confetti = ConfettiController(duration: const Duration(seconds: 3));
+  }
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  Future<void> _launchRewardLink() async {
+    final Uri url = Uri.parse('https://myfitvacation.com/align-rewards');
+    if (!await launchUrl(url)) throw Exception('Could not launch $url');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // THE REVEAL IMAGE (Your GHL Link)
+        Positioned.fill(
+          child: Image.network(widget.imageUrl, fit: BoxFit.cover),
+        ),
+        
+        // THE MIST
+        IgnorePointer(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 1000),
+              color: Colors.white.withOpacity(_movements == 5 ? 0.0 : 0.8),
+            ),
+          ),
+        ),
+
+        Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
+
+        SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              Text(widget.title.toUpperCase(), style: const TextStyle(fontSize: 14, letterSpacing: 4, fontWeight: FontWeight.bold, color: Color(0xFF008080))),
+              const Spacer(),
+              
+              Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          Text("${_movements}/5", style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900)),
+                          const SizedBox(height: 30),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (_movements < 5) {
+                                setState(() {
+                                  _movements++;
+                                  _sigma = (45.0 - (_movements * 9.0)).clamp(0, 45);
+                                  if (_movements == 5) _confetti.play();
+                                });
+                              } else {
+                                _launchRewardLink();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF008080),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 60),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                            ),
+                            child: Text(_movements == 5 ? "CLAIM REWARD 🎁" : "I DID A STRETCH ✅"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 100),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
