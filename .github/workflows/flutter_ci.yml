@@ -10,9 +10,6 @@ on:
 jobs:
   validate:
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: my_fit_vacation_1
     steps:
       - name: Checkout
         uses: actions/checkout@v4

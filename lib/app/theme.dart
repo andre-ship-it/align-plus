@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppPalette {
   static const Color deepTeal = Color(0xFF008080);
@@ -25,41 +26,48 @@ ThemeData buildPremiumTheme() {
 
   final textTheme = base.textTheme.copyWith(
     headlineLarge: base.textTheme.headlineLarge?.copyWith(
-      fontFamily: 'Playfair Display',
       fontWeight: FontWeight.w700,
       color: AppPalette.ink,
       letterSpacing: 0.2,
     ),
     headlineMedium: base.textTheme.headlineMedium?.copyWith(
-      fontFamily: 'Playfair Display',
       fontWeight: FontWeight.w700,
       color: AppPalette.ink,
       letterSpacing: 0.2,
     ),
     titleLarge: base.textTheme.titleLarge?.copyWith(
-      fontFamily: 'Playfair Display',
       fontWeight: FontWeight.w600,
       color: AppPalette.ink,
     ),
     bodyLarge: base.textTheme.bodyLarge?.copyWith(
-      fontFamily: 'Inter',
       color: AppPalette.ink,
       height: 1.35,
     ),
     bodyMedium: base.textTheme.bodyMedium?.copyWith(
-      fontFamily: 'Inter',
       color: AppPalette.ink,
       height: 1.35,
     ),
     labelLarge: base.textTheme.labelLarge?.copyWith(
-      fontFamily: 'Inter',
       fontWeight: FontWeight.w600,
       letterSpacing: 0.25,
     ),
   );
 
+  final premiumTextTheme = GoogleFonts.interTextTheme(textTheme).copyWith(
+    headlineLarge: GoogleFonts.playfairDisplay(
+      textStyle: textTheme.headlineLarge,
+    ),
+    headlineMedium: GoogleFonts.playfairDisplay(
+      textStyle: textTheme.headlineMedium,
+    ),
+    titleLarge: GoogleFonts.playfairDisplay(textStyle: textTheme.titleLarge),
+    bodyLarge: GoogleFonts.inter(textStyle: textTheme.bodyLarge),
+    bodyMedium: GoogleFonts.inter(textStyle: textTheme.bodyMedium),
+    labelLarge: GoogleFonts.inter(textStyle: textTheme.labelLarge),
+  );
+
   return base.copyWith(
-    textTheme: textTheme,
+    textTheme: premiumTextTheme,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppPalette.deepTeal,
@@ -68,7 +76,7 @@ ThemeData buildPremiumTheme() {
         elevation: 2,
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        textStyle: textTheme.labelLarge,
+        textStyle: premiumTextTheme.labelLarge,
       ),
     ),
     cardTheme: CardThemeData(
@@ -81,8 +89,8 @@ ThemeData buildPremiumTheme() {
       backgroundColor: AppPalette.cloudWhite.withOpacity(0.95),
       selectedItemColor: AppPalette.deepTeal,
       unselectedItemColor: AppPalette.ink.withOpacity(0.55),
-      selectedLabelStyle: textTheme.labelSmall,
-      unselectedLabelStyle: textTheme.labelSmall,
+      selectedLabelStyle: premiumTextTheme.labelSmall,
+      unselectedLabelStyle: premiumTextTheme.labelSmall,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
     ),

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../shared/widgets/press_scale_button.dart';
 
 class SurveyScreen extends StatefulWidget {
-  final VoidCallback onCompleted;
+  final void Function(Map<String, String> answers) onCompleted;
 
   const SurveyScreen({super.key, required this.onCompleted});
 
@@ -15,6 +15,7 @@ class SurveyScreen extends StatefulWidget {
 class _SurveyScreenState extends State<SurveyScreen> {
   final PageController _surveyController = PageController();
   int _currentStep = 0;
+  final Map<int, String> _answers = {};
 
   final List<Map<String, dynamic>> _questions = [
     {
@@ -62,6 +63,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
                           child: PressScaleButton(
                             onPressed: () {
                               HapticFeedback.lightImpact();
+                              _answers[_currentStep] = option;
                               if (_currentStep < _questions.length - 1) {
                                 _surveyController.nextPage(
                                   duration: const Duration(milliseconds: 450),
@@ -69,7 +71,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
                                 );
                                 setState(() => _currentStep++);
                               } else {
-                                widget.onCompleted();
+                                widget.onCompleted({
+                                  'goal': _answers[0] ?? option,
+                                  'tension': _answers[1] ?? '',
+                                });
                               }
                             },
                             child: Text(option),
