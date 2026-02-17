@@ -16,8 +16,8 @@ class AlignPlusApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF008080),
-        fontFamily: 'Georgia',
+        colorSchemeSeed: const Color(0xFF008080), // FitWell Teal
+        fontFamily: 'Georgia', // Authoritative serif
       ),
       home: const MainAppFlow(),
     );
