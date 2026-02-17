@@ -136,7 +136,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
               const SizedBox(height: 25),
               ElevatedButton.icon(
                 onPressed: () => _shareProgress(isMilestone),
-                icon: const Icon(Icons.share_rounded),
+                icon: const Icon(Icons.ios_share_rounded),
                 label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE PROGRESS"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080), 
@@ -199,9 +199,20 @@ class _MainAppFlowState extends State<MainAppFlow> {
       ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
       : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
     final String shareUrl = "https://app.myfitvacation.com";
-    final Uri emailUri = Uri.parse('mailto:?subject=My Bali Alignment Streak&body=$shareText $shareUrl');
+
+    final Uri smsUri = Uri.parse('sms:?body=$shareText $shareUrl');
     
-    if (await canLaunchUrl(emailUri)) {
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Streak copied! Paste it in your Story or Chat 🌴")),
+        );
+      }
+    } catch (e) {
+      final Uri emailUri = Uri.parse('mailto:?subject=My Alignment Streak&body=$shareText $shareUrl');
       await launchUrl(emailUri);
     }
   }
