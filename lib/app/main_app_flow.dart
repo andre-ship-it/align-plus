@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 
-// Ensure this matches your directory: lib/features/ritual/mist_reveal_screen.dart
+// Ensure this path matches your directory: lib/features/ritual/mist_reveal_screen.dart
 import '../features/ritual/mist_reveal_screen.dart'; 
 
 class MainAppFlow extends StatefulWidget {
@@ -21,11 +21,12 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _streak = 0;
   int _giveawayEntries = 0;
 
-  // Updated Rehabilitative Media
+  // Rehabilitative Media & Links
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994f4341ecd71b1446848f5.gif';
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
+  final String _communityUrl = 'https://Align.fitwell.life';
 
-  // Rehabilitative Therapy Content
+  // 30-Day Therapeutic Program Data
   final List<String> _locations = [
     "Ubud Jungle Sanctuary", "Uluwatu Cliffside", "Seminyak Shoreline", 
     "Canggu Zen Garden", "Nusa Penida Peak", "Amed Volcanic Coast", "Sidemen Healing Valley"
@@ -58,7 +59,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   void _calculateEntries(int streak) {
-    // 1 entry per day + tiered bonuses for retention
     int baseEntries = streak;
     int bonus = 0;
     if (streak >= 7) bonus += 10;
@@ -72,6 +72,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
     if (isFirstRun) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcomeDialog());
       prefs.setBool('is_first_run', false);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
     }
   }
 
@@ -279,20 +286,25 @@ class _MainAppFlowState extends State<MainAppFlow> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.card_giftcard, color: Colors.white, size: 48),
-              const SizedBox(height: 15),
+              const SizedBox(height: 10),
               const Text("Invite & Earn", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 15),
-              const Text("Multiply your entries by inviting friends to the Reset. +5 entries per referral.", 
-                textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5)),
-              const SizedBox(height: 25),
+              const Text("+5 entries per referral.", style: TextStyle(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () {
-                  Clipboard.setData(const ClipboardData(text: "I'm earning entries for a free Bali vacation on app.fitwell.life 🌴 Join the 30-Day Reset!"));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Referral copied! 🌴")));
+                  Clipboard.setData(const ClipboardData(text: "Join the Reset on app.fitwell.life 🌴"));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Link copied! 🌴")));
                 },
                 icon: const Icon(Icons.copy_rounded),
                 label: const Text("COPY REFERRAL LINK"),
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF008080), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100))),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () => _launchUrl(_communityUrl),
+                icon: const Icon(Icons.groups_rounded),
+                label: const Text("JOIN THE COMMUNITY"),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF008080), minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100))),
               ),
             ],
           ),
@@ -311,19 +323,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
             children: [
               const Icon(Icons.install_mobile_rounded, color: Colors.white, size: 48),
               const SizedBox(height: 15),
-              const Text("FitWell Home Screen", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text("FitWell App", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 15),
-              const Text("1. Tap Share\n2. Select 'Add to Home Screen'", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16, height: 1.5)),
-              const SizedBox(height: 25),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Clipboard.setData(const ClipboardData(text: "https://app.fitwell.life"));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Link copied! 📋")));
-                },
-                icon: const Icon(Icons.link_rounded),
-                label: const Text("COPY APP LINK"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF008080), minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100))),
-              ),
+              const Text("1. Tap Share\n2. Add to Home Screen", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
             ],
           ),
         )),
