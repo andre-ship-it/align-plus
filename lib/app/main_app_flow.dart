@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 
-// Import your modular ritual feature
+// Your core ritual feature
 import '../features/ritual/mist_reveal_screen.dart'; 
 
 class MainAppFlow extends StatefulWidget {
@@ -21,9 +21,11 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _streak = 0;
   int _giveawayEntries = 0;
 
+  // Asset URLs
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994f4341ecd71b1446848f5.gif';
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
+  // 30-Day Program Data
   final List<String> _locations = [
     "Ubud Jungle Sanctuary", "Uluwatu Cliffside", "Seminyak Shoreline", 
     "Canggu Zen Garden", "Nusa Penida Peak", "Amed Volcanic Coast", "Sidemen Healing Valley"
