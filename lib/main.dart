@@ -8,8 +8,7 @@ import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
 
-// CRITICAL FIX: Removed the buggy package-specific conditional import 
-// and replaced it with a standard safe web-only check.
+// Safe conditional import
 import 'dart:html' as html if (dart.library.io) 'package:flutter/material.dart';
 
 void main() => runApp(const AlignPlusApp());
@@ -48,7 +47,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   void initState() {
     super.initState();
     _loadStreak();
-    // Safety delay to ensure the browser context is ready before checking PWA status
     if (kIsWeb) {
       Future.delayed(const Duration(seconds: 2), () => _safePwaCheck());
     }
@@ -56,18 +54,14 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   void _safePwaCheck() {
     try {
-      // Check if we are on a web platform first
-      if (!kIsWeb) return;
-
       final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
                                 (html.window.navigator as dynamic).standalone == true;
       final bool isIOS = html.window.navigator.userAgent.toLowerCase().contains('iphone');
-      
       if (isIOS && !isStandalone) {
         _showPWAInstallModal();
       }
     } catch (e) {
-      debugPrint("PWA check skipped to prevent mobile crash: $e");
+      debugPrint("PWA check skipped: $e");
     }
   }
 
@@ -78,7 +72,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Install align+"),
-        content: const Text("Add this ritual to your Home Screen for the full Bali experience! \n\n1. Tap Share\n2. Add to Home Screen"),
+        content: const Text("Add to Home Screen for the full Bali experience! \n\n1. Tap Share\n2. Add to Home Screen"),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Got it"))],
       ),
     );
@@ -199,6 +193,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   bool _isStretching = false; 
   int _timerSeconds = 30; 
   Timer? _stretchTimer;
+  bool _videoInitialized = false;
 
   @override
   void initState() {
@@ -209,19 +204,27 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         if (status == AnimationStatus.completed) _breatheController.reverse();
         else if (status == AnimationStatus.dismissed) _breatheController.forward();
       });
-    _initVideo();
+    
+    // Safety delay for video boot
+    Future.delayed(const Duration(milliseconds: 500), () => _initVideo());
   }
 
   void _initVideo() {
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-      ..initialize().then((_) {
-        if (mounted) {
-          _controller?.setLooping(true);
-          _controller?.setVolume(0);
-          _controller?.play();
-          setState(() {});
-        }
-      });
+    try {
+      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+        ..initialize().then((_) {
+          if (mounted) {
+            _controller?.setLooping(true);
+            _controller?.setVolume(0);
+            _controller?.play();
+            setState(() => _videoInitialized = true);
+          }
+        }).catchError((error) {
+          debugPrint("Video initialization failed, staying on image: $error");
+        });
+    } catch (e) {
+      debugPrint("Video error caught: $e");
+    }
   }
 
   void _startStretch() {
@@ -273,7 +276,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     return Stack(
       children: [
         Positioned.fill(
-          child: (_controller != null && _controller!.value.isInitialized)
+          child: (_videoInitialized && _controller != null && _controller!.value.isInitialized)
               ? VideoPlayer(_controller!)
               : Image.network(widget.imageUrl, fit: BoxFit.cover),
         ),
