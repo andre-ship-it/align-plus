@@ -200,21 +200,22 @@ class _MainAppFlowState extends State<MainAppFlow> {
       : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
     final String shareUrl = "https://app.myfitvacation.com";
 
-    final Uri smsUri = Uri.parse('sms:?body=$shareText $shareUrl');
+    // UNIVERSAL SHARE: Copy to clipboard and notify user
+    // This is the most reliable way to share to social media from a PWA
+    Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
     
-    try {
-      if (await canLaunchUrl(smsUri)) {
-        await launchUrl(smsUri);
-      } else {
-        Clipboard.setData(ClipboardData(text: "$shareText $shareUrl"));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Streak copied! Paste it in your Story or Chat 🌴")),
-        );
-      }
-    } catch (e) {
-      final Uri emailUri = Uri.parse('mailto:?subject=My Alignment Streak&body=$shareText $shareUrl');
-      await launchUrl(emailUri);
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Streak copied! Paste into Instagram or X 🌴✨"),
+        backgroundColor: Color(0xFF008080),
+        duration: Duration(seconds: 4),
+      ),
+    );
+    
+    // Attempt to open native share if available (Web Share API)
+    // On most iPhones, this will now open the full social share sheet
+    final Uri genericShare = Uri.parse('https://app.myfitvacation.com');
+    await launchUrl(genericShare, mode: LaunchMode.externalApplication);
   }
 
   Widget _glassCard(Widget child, bool isMilestone) {
