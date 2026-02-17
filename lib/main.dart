@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:video_player/video_player.dart';
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,7 +36,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0; 
   int _streak = 0;
   
-  final String _ritualVideoUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/68815f271933f6215ec16c99.mp4';
+  // Use a GIF here instead of MP4 for maximum mobile stability
+  final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
   @override
@@ -89,7 +89,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
       extendBody: true,
       body: _selectedTab == 0 
         ? MistRevealScreen(
-            videoUrl: _ritualVideoUrl, 
+            gifUrl: _ritualGifUrl, 
             imageUrl: _revealImageUrl, 
             title: "Morning Ritual",
             currentStreak: _streak,
@@ -132,7 +132,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
 }
 
 class MistRevealScreen extends StatefulWidget {
-  final String videoUrl;
+  final String gifUrl;
   final String imageUrl;
   final String title;
   final int currentStreak;
@@ -140,7 +140,7 @@ class MistRevealScreen extends StatefulWidget {
 
   const MistRevealScreen({
     super.key, 
-    required this.videoUrl, 
+    required this.gifUrl, 
     required this.imageUrl, 
     required this.title,
     required this.currentStreak,
@@ -152,7 +152,6 @@ class MistRevealScreen extends StatefulWidget {
 }
 
 class _MistRevealScreenState extends State<MistRevealScreen> with TickerProviderStateMixin {
-  VideoPlayerController? _controller;
   late ConfettiController _confetti;
   late AnimationController _breatheController;
   
@@ -161,7 +160,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   bool _isStretching = false; 
   int _timerSeconds = 30; 
   Timer? _stretchTimer;
-  bool _videoReady = false;
 
   @override
   void initState() {
@@ -172,25 +170,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         if (status == AnimationStatus.completed) _breatheController.reverse();
         else if (status == AnimationStatus.dismissed) _breatheController.forward();
       });
-    
-    _initVideoSafely();
-  }
-
-  Future<void> _initVideoSafely() async {
-    try {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
-      await _controller!.initialize();
-      if (mounted) {
-        setState(() {
-          _videoReady = true;
-          _controller!.setLooping(true);
-          _controller!.setVolume(0);
-          _controller!.play();
-        });
-      }
-    } catch (e) {
-      debugPrint("Video failed to load: $e");
-    }
   }
 
   void _startStretch() {
@@ -242,9 +221,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     return Stack(
       children: [
         Positioned.fill(
-          child: (_videoReady && _controller != null && _controller!.value.isInitialized)
-              ? VideoPlayer(_controller!)
-              : Image.network(widget.imageUrl, fit: BoxFit.cover),
+          child: Image.network(widget.gifUrl, fit: BoxFit.cover),
         ),
         IgnorePointer(
           child: BackdropFilter(
@@ -347,7 +324,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
 
   @override
   void dispose() { 
-    _controller?.dispose(); 
     _confetti.dispose(); 
     _breatheController.dispose(); 
     _stretchTimer?.cancel(); 
