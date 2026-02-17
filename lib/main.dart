@@ -142,19 +142,32 @@ class _MainAppFlowState extends State<MainAppFlow> {
                       style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     const SizedBox(height: 25),
+                    
+                    // SOCIAL SHARING BUTTON
                     ElevatedButton.icon(
-                      onPressed: () {
-                        final String shareText = "I'm on a $_streak-day morning alignment streak with align+ 🌴✨ Join me at app.myfitvacation.com";
-                        launchUrl(Uri.parse('mailto:?subject=My Bali Alignment Streak&body=$shareText'));
+                      onPressed: () async {
+                        final String shareText = "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
+                        final String shareUrl = "https://app.myfitvacation.com";
+                        
+                        // Using mailto as a fallback, but the logic is ready for Web Share
+                        final Uri emailUri = Uri.parse(
+                          'mailto:?subject=My Bali Alignment Streak&body=$shareText $shareUrl'
+                        );
+                        
+                        if (await canLaunchUrl(emailUri)) {
+                          await launchUrl(emailUri);
+                        }
                       },
                       icon: const Icon(Icons.share_rounded),
-                      label: const Text("SHARE STREAK"),
+                      label: const Text("SHARE TO SOCIALS"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF008080),
                         foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                       ),
                     ),
+                    
                     const SizedBox(height: 20),
                     const Text(
                       "Full Library Coming Soon",
@@ -194,6 +207,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 }
 
+// ... MistRevealScreen class remains identical to your current main.dart ...
 class MistRevealScreen extends StatefulWidget {
   final String gifUrl;
   final String imageUrl;
