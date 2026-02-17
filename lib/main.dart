@@ -36,7 +36,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   int _selectedTab = 0; 
   int _streak = 0;
   
-  // Official Bali Assets
   final String _ritualGifUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6994079954da040a6970fcb2.gif'; 
   final String _revealImageUrl = 'https://storage.googleapis.com/msgsndr/y5pUJDsp1xPu9z0K6inm/media/6610b1519b8fa973cb15b332.jpeg';
 
@@ -116,41 +115,67 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Widget _buildLibraryUI() {
-    bool isMilestone = _streak >= 7;
     return Stack(
       children: [
         Positioned.fill(child: Image.network(_revealImageUrl, fit: BoxFit.cover)),
-        Center(child: _glassCard(
-          Column(
-            mainAxisSize: MainAxisSize.min,
+        SafeArea(
+          child: Column(
             children: [
-              Text(isMilestone ? "MILESTONE ACHIEVED! 🏆" : "Reset Library", 
-                style: TextStyle(color: isMilestone ? Colors.amber[100] : Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 15),
-              Text("$_streak DAY STREAK 🔥", 
-                style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -1)),
-              if (isMilestone) ...[
-                const SizedBox(height: 10),
-                const Text("Your mind is clear, your body aligned.", 
-                  style: TextStyle(color: Colors.white, fontStyle: FontStyle.italic, fontSize: 16)),
-              ],
-              const SizedBox(height: 25),
-              ElevatedButton.icon(
-                onPressed: () => _shareProgress(isMilestone),
-                icon: const Icon(Icons.ios_share_rounded),
-                label: Text(isMilestone ? "SHARE YOUR JOURNEY" : "SHARE PROGRESS"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isMilestone ? Colors.orangeAccent : const Color(0xFF008080), 
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+              const SizedBox(height: 20),
+              const Text("30-DAY RESET MAP", 
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2, shadows: [Shadow(blurRadius: 10, color: Colors.black45)])),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(25, 30, 25, 120),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 15,
+                    crossAxisSpacing: 15,
+                  ),
+                  itemCount: 30,
+                  itemBuilder: (context, index) {
+                    int dayNumber = index + 1;
+                    bool isCompleted = dayNumber <= _streak;
+                    bool isNext = dayNumber == _streak + 1;
+
+                    return _buildMilestoneTile(dayNumber, isCompleted, isNext);
+                  },
                 ),
               ),
             ],
           ),
-          isMilestone,
-        )),
+        ),
       ],
+    );
+  }
+
+  Widget _buildMilestoneTile(int day, bool isCompleted, bool isNext) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(15),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isCompleted ? const Color(0xFF008080).withOpacity(0.6) : Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: isNext ? Colors.white : (isCompleted ? const Color(0xFFB2DFDB) : Colors.white.withOpacity(0.2)),
+              width: isNext ? 2 : 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              "$day",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: isCompleted || isNext ? FontWeight.bold : FontWeight.normal,
+                opacity: isCompleted || isNext ? 1.0 : 0.5,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -173,7 +198,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
                 onPressed: () {
                   Clipboard.setData(const ClipboardData(text: "https://app.myfitvacation.com"));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Invite link copied to clipboard! 📋")),
+                    const SnackBar(content: Text("Invite link copied to clipboard! 📋"), duration: Duration(seconds: 2)),
                   );
                 },
                 icon: const Icon(Icons.copy_rounded),
@@ -185,29 +210,12 @@ class _MainAppFlowState extends State<MainAppFlow> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text("One tap to start your ritual.", style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic)),
             ],
           ),
           false,
         )),
       ],
     );
-  }
-
-  void _shareProgress(bool isMilestone) async {
-    final String shareText = isMilestone 
-      ? "Milestone Achieved! I've reached a 7-day morning alignment streak with align+ 🌴✨"
-      : "I'm on a $_streak-day morning alignment streak with align+ 🌴✨";
-    const String shareUrl = "https://app.myfitvacation.com";
-
-    Clipboard.setData(const ClipboardData(text: "$shareText $shareUrl"));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Streak copied! Paste into Instagram or X 🌴✨"), backgroundColor: Color(0xFF008080)),
-    );
-    
-    final Uri genericShare = Uri.parse('https://app.myfitvacation.com');
-    await launchUrl(genericShare, mode: LaunchMode.externalApplication);
   }
 
   Widget _glassCard(Widget child, bool isMilestone) {
@@ -248,7 +256,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
             type: BottomNavigationBarType.fixed,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
-              BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Library"),
+              BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Map"),
               BottomNavigationBarItem(icon: Icon(Icons.add_to_home_screen_rounded), label: "Install"),
             ],
           ),
@@ -258,6 +266,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 }
 
+// MistRevealScreen remains unchanged as it handles the core ritual logic.
 class MistRevealScreen extends StatefulWidget {
   final String gifUrl;
   final String imageUrl;
