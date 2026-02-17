@@ -47,7 +47,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
   void initState() {
     super.initState();
     _loadStreak();
-    // PWA Check is moved to post-frame to prevent initialization crashes
     if (kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _checkInstallation());
     }
@@ -59,7 +58,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
       final bool isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
       final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
                                 (html.window.navigator as dynamic).standalone == true;
-
       if (isIOS && !isStandalone) {
         _showPWAInstallModal();
       }
@@ -120,6 +118,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
     );
   }
 
+  // --- MISSING METHODS ADDED BELOW ---
+
   Widget _buildSurveyUI() {
     return Container(
       key: const ValueKey('survey'),
@@ -145,7 +145,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
 
   Widget _buildLibraryUI() {
     return Container(
-      decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)])),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)]),
+      ),
       child: const Center(child: Text("Library coming soon...")),
     );
   }
@@ -195,7 +197,7 @@ class MistRevealScreen extends StatefulWidget {
 }
 
 class _MistRevealScreenState extends State<MistRevealScreen> with TickerProviderStateMixin {
-  VideoPlayerController? _controller; // Made nullable for safety
+  VideoPlayerController? _controller; 
   late ConfettiController _confetti;
   late AnimationController _breatheController;
   
@@ -214,7 +216,6 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         if (status == AnimationStatus.completed) _breatheController.reverse();
         else if (status == AnimationStatus.dismissed) _breatheController.forward();
       });
-
     _initVideo();
   }
 
