@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
-import 'dart:html' as html; // Handles PWA detection on Web
+
+// Conditional import to prevent crashes on non-web platforms
+import 'dart:html' as html if (dart.library.html) 'dart:html';
 
 void main() => runApp(const AlignPlusApp());
 
@@ -45,65 +47,46 @@ class _MainAppFlowState extends State<MainAppFlow> {
   void initState() {
     super.initState();
     _loadStreak();
-    // PWA Detection: Show install prompt for iOS web users
+    // PWA Check is moved to post-frame to prevent initialization crashes
     if (kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _checkInstallation());
     }
   }
 
-  // --- PWA INSTALLATION LOGIC ---
   void _checkInstallation() {
-    final userAgent = html.window.navigator.userAgent.toLowerCase();
-    final bool isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
-    final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
-                              (html.window.navigator as dynamic).standalone == true;
+    try {
+      final userAgent = html.window.navigator.userAgent.toLowerCase();
+      final bool isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
+      final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
+                                (html.window.navigator as dynamic).standalone == true;
 
-    if (isIOS && !isStandalone) {
-      _showPWAInstallModal();
+      if (isIOS && !isStandalone) {
+        _showPWAInstallModal();
+      }
+    } catch (e) {
+      debugPrint("PWA Check suppressed: $e");
     }
   }
 
   void _showPWAInstallModal() {
     showDialog(
       context: context,
-      barrierDismissible: true,
       builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: AlertDialog(
-          backgroundColor: Colors.white.withOpacity(0.9),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          title: const Text("Install align+", textAlign: TextAlign.center, 
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Install align+", style: TextStyle(fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Get the full Bali experience on your home screen!", textAlign: TextAlign.center),
-              const SizedBox(height: 25),
-              _installStep(Icons.ios_share, "1. Tap the 'Share' icon at the bottom of Safari."),
-              _installStep(Icons.add_box_outlined, "2. Scroll down and tap 'Add to Home Screen'."),
-              _installStep(Icons.ads_click, "3. Open align+ from your home screen like an app!"),
+            children: const [
+              Text("Add to Home Screen for the full Bali experience."),
+              SizedBox(height: 20),
+              ListTile(leading: Icon(Icons.ios_share), title: Text("1. Tap Share")),
+              ListTile(leading: Icon(Icons.add_box_outlined), title: Text("2. Add to Home Screen")),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("GOT IT", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF008080))),
-            )
-          ],
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("GOT IT"))],
         ),
-      ),
-    );
-  }
-
-  Widget _installStep(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF008080)),
-          const SizedBox(width: 15),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-        ],
       ),
     );
   }
@@ -137,9 +120,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
     );
   }
 
-  // --- UI BUILDERS ---
   Widget _buildSurveyUI() {
     return Container(
+      key: const ValueKey('survey'),
       decoration: const BoxDecoration(
         gradient: LinearGradient(colors: [Color(0xFF004D40), Color(0xFF008080)]),
       ),
@@ -163,7 +146,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   Widget _buildLibraryUI() {
     return Container(
       decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)])),
-      child: const Center(child: Text("Explore more Bali destinations soon...")),
+      child: const Center(child: Text("Library coming soon...")),
     );
   }
 
@@ -180,7 +163,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
             onTap: (index) => setState(() => _selectedTab = index),
             backgroundColor: Colors.white.withOpacity(0.1),
             selectedItemColor: const Color(0xFF004D40),
-            unselectedItemColor: Colors.black38,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
               BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Library"),
@@ -213,7 +195,7 @@ class MistRevealScreen extends StatefulWidget {
 }
 
 class _MistRevealScreenState extends State<MistRevealScreen> with TickerProviderStateMixin {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller; // Made nullable for safety
   late ConfettiController _confetti;
   late AnimationController _breatheController;
   
@@ -233,13 +215,19 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         else if (status == AnimationStatus.dismissed) _breatheController.forward();
       });
 
+    _initVideo();
+  }
+
+  void _initVideo() {
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
       ..initialize().then((_) {
-        _controller.setLooping(true);
-        _controller.setVolume(0);
-        _controller.play();
-        setState(() {});
-      });
+        if (mounted) {
+          _controller?.setLooping(true);
+          _controller?.setVolume(0);
+          _controller?.play();
+          setState(() {});
+        }
+      }).catchError((e) => debugPrint("Video Init Error: $e"));
   }
 
   void _updateStreakLogic() async {
@@ -252,9 +240,8 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     if (lastDateStr != todayStr) {
       if (lastDateStr != null) {
         final DateTime lastDate = DateTime.parse(lastDateStr);
-        final int difference = now.difference(lastDate).inDays;
-        if (difference == 1) newStreak++;
-        else if (difference > 1) newStreak = 1;
+        if (now.difference(lastDate).inDays == 1) newStreak++;
+        else if (now.difference(lastDate).inDays > 1) newStreak = 1;
       } else {
         newStreak = 1;
       }
@@ -289,8 +276,20 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: _controller.value.isInitialized ? VideoPlayer(_controller) : Image.network(widget.imageUrl, fit: BoxFit.cover)),
-        IgnorePointer(child: BackdropFilter(filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma), child: AnimatedContainer(duration: const Duration(milliseconds: 1000), color: Colors.white.withOpacity(_movements == 5 ? 0.0 : 0.8)))),
+        Positioned.fill(
+          child: (_controller != null && _controller!.value.isInitialized)
+              ? VideoPlayer(_controller!)
+              : Image.network(widget.imageUrl, fit: BoxFit.cover),
+        ),
+        IgnorePointer(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: _sigma, sigmaY: _sigma),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 1000),
+              color: Colors.white.withOpacity(_movements == 5 ? 0.0 : 0.8),
+            ),
+          ),
+        ),
         Align(alignment: Alignment.topCenter, child: ConfettiWidget(confettiController: _confetti, blastDirection: pi/2)),
         SafeArea(
           child: Column(
@@ -305,11 +304,17 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
                   borderRadius: BorderRadius.circular(30),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 500),
+                    child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.25), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.4))),
-                      child: Opacity(opacity: _isStretching ? 0.0 : 1.0, child: _movements == 5 ? _buildSummaryUI() : _buildActionUI()),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.25),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white.withOpacity(_isStretching ? 0.0 : 0.4)),
+                      ),
+                      child: Opacity(
+                        opacity: _isStretching ? 0.0 : 1.0,
+                        child: _movements == 5 ? _buildSummaryUI() : _buildActionUI(),
+                      ),
                     ),
                   ),
                 ),
@@ -328,7 +333,8 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
         opacity: _breatheController,
         child: Column(
           children: [
-            Text(_breatheController.value > 0.5 ? "Breathe Out..." : "Breathe In...", style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300, shadows: [Shadow(blurRadius: 15, color: Colors.black54)])),
+            Text(_breatheController.value > 0.5 ? "Breathe Out..." : "Breathe In...", 
+              style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300, shadows: [Shadow(blurRadius: 15, color: Colors.black54)])),
             Text("$_timerSeconds", style: const TextStyle(fontSize: 60, color: Colors.white, fontWeight: FontWeight.bold)),
           ],
         ),
@@ -360,7 +366,10 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
           ],
         ),
         const SizedBox(height: 30),
-        ElevatedButton(onPressed: () => launchUrl(Uri.parse('https://www.myfitvacation.com/align-rewards-page')), child: const Text("CLAIM REWARD 🎁")),
+        ElevatedButton(
+          onPressed: () => launchUrl(Uri.parse('https://www.myfitvacation.com/align-rewards-page')), 
+          child: const Text("CLAIM REWARD 🎁"),
+        ),
       ],
     );
   }
@@ -368,5 +377,11 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
   Widget _stat(String val, String label) => Column(children: [Text(val, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)), Text(label, style: const TextStyle(fontSize: 10))]);
 
   @override
-  void dispose() { _controller.dispose(); _confetti.dispose(); _breatheController.dispose(); _stretchTimer?.cancel(); super.dispose(); }
+  void dispose() { 
+    _controller?.dispose(); 
+    _confetti.dispose(); 
+    _breatheController.dispose(); 
+    _stretchTimer?.cancel(); 
+    super.dispose(); 
+  }
 }
