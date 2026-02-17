@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:video_player/video_player.dart';
 import 'package:confetti/confetti.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Required for streaks
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
+import 'dart:html' as html; // Handles PWA detection on Web
 
 void main() => runApp(const AlignPlusApp());
 
@@ -43,6 +45,67 @@ class _MainAppFlowState extends State<MainAppFlow> {
   void initState() {
     super.initState();
     _loadStreak();
+    // PWA Detection: Show install prompt for iOS web users
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkInstallation());
+    }
+  }
+
+  // --- PWA INSTALLATION LOGIC ---
+  void _checkInstallation() {
+    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    final bool isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
+    final bool isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
+                              (html.window.navigator as dynamic).standalone == true;
+
+    if (isIOS && !isStandalone) {
+      _showPWAInstallModal();
+    }
+  }
+
+  void _showPWAInstallModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Colors.white.withOpacity(0.9),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          title: const Text("Install align+", textAlign: TextAlign.center, 
+            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF004D40))),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Get the full Bali experience on your home screen!", textAlign: TextAlign.center),
+              const SizedBox(height: 25),
+              _installStep(Icons.ios_share, "1. Tap the 'Share' icon at the bottom of Safari."),
+              _installStep(Icons.add_box_outlined, "2. Scroll down and tap 'Add to Home Screen'."),
+              _installStep(Icons.ads_click, "3. Open align+ from your home screen like an app!"),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("GOT IT", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF008080))),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _installStep(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF008080)),
+          const SizedBox(width: 15),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
   }
 
   _loadStreak() async {
@@ -88,6 +151,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () => setState(() => _showSurvey = false),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(200, 60)),
               child: const Text("Start My Ritual"),
             ),
           ],
@@ -99,7 +163,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
   Widget _buildLibraryUI() {
     return Container(
       decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFE0F2F1), Color(0xFFB2DFDB)])),
-      child: const Center(child: Text("Library coming soon...")),
+      child: const Center(child: Text("Explore more Bali destinations soon...")),
     );
   }
 
@@ -114,8 +178,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
           child: BottomNavigationBar(
             currentIndex: _selectedTab,
             onTap: (index) => setState(() => _selectedTab = index),
-            backgroundColor: Colors.black.withOpacity(0.05),
+            backgroundColor: Colors.white.withOpacity(0.1),
             selectedItemColor: const Color(0xFF004D40),
+            unselectedItemColor: Colors.black38,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.spa_rounded), label: "Ritual"),
               BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: "Library"),
@@ -275,7 +340,7 @@ class _MistRevealScreenState extends State<MistRevealScreen> with TickerProvider
     return Column(
       children: [
         Text("${_movements}/5", style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Color(0xFF004D40))),
-        const Text("ALIGNMENT PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+        const Text("STRETCH PROGRESS", style: TextStyle(fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
         const SizedBox(height: 30),
         ElevatedButton(onPressed: _startStretch, child: const Text("BEGIN STRETCH ✅")),
       ],
