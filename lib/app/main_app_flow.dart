@@ -51,6 +51,21 @@ class _MainAppFlowState extends State<MainAppFlow> {
     });
   }
 
+  // Added Reset Functionality
+  void _resetJourney() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('streak_count', 0);
+    setState(() {
+      _streak = 0;
+      _calculateEntries(0);
+      _selectedTab = 0;
+      _showWelcome = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Journey reset to Day 1.")),
+    );
+  }
+
   void _calculateEntries(int s) {
     int b = s + (s >= 30 ? 100 : s >= 15 ? 25 : s >= 7 ? 10 : 0);
     setState(() => _giveawayEntries = b);
@@ -153,7 +168,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
           Text("DAY ${_streak + 1}", style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
           Text(_stretches[idx], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          // High Contrast Descriptor
           Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(15)),
@@ -208,16 +222,48 @@ class _MainAppFlowState extends State<MainAppFlow> {
   Widget _buildMapUI() {
     return Stack(children: [
       Positioned.fill(child: Image.network(_bgImage, fit: BoxFit.cover)),
-      GridView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 15, crossAxisSpacing: 15),
-        itemCount: 30,
-        itemBuilder: (c, i) => Container(
-          decoration: BoxDecoration(color: i < _streak ? const Color(0xFF008080).withOpacity(0.8) : Colors.white10, borderRadius: BorderRadius.circular(15)),
-          child: Center(child: Text("Day ${i + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-        ),
+      Column(
+        children: [
+          const SizedBox(height: 20),
+          const Text("YOUR PROGRESS", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 15, crossAxisSpacing: 15),
+              itemCount: 30,
+              itemBuilder: (c, i) => Container(
+                decoration: BoxDecoration(color: i < _streak ? const Color(0xFF008080).withOpacity(0.8) : Colors.white10, borderRadius: BorderRadius.circular(15)),
+                child: Center(child: Text("Day ${i + 1}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              ),
+            ),
+          ),
+          // Reset Button
+          Padding(
+            padding: const EdgeInsets.only(bottom: 110),
+            child: TextButton.icon(
+              onPressed: () => _showResetDialog(),
+              icon: const Icon(Icons.refresh, color: Colors.white70),
+              label: const Text("RESET 30-DAY JOURNEY", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
       ),
     ]);
+  }
+
+  void _showResetDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF004D40),
+        title: const Text("Reset Journey?", style: TextStyle(color: Colors.white)),
+        content: const Text("This will clear your current streak and entries. This cannot be undone.", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL", style: TextStyle(color: Colors.white))),
+          TextButton(onPressed: () { Navigator.pop(context); _resetJourney(); }, child: const Text("RESET", style: TextStyle(color: Colors.redAccent))),
+        ],
+      ),
+    );
   }
 
   Widget _buildIncentiveUI() {
