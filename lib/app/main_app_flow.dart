@@ -51,7 +51,6 @@ class _MainAppFlowState extends State<MainAppFlow> {
     });
   }
 
-  // Added Reset Functionality
   void _resetJourney() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('streak_count', 0);
@@ -60,10 +59,8 @@ class _MainAppFlowState extends State<MainAppFlow> {
       _calculateEntries(0);
       _selectedTab = 0;
       _showWelcome = true;
+      _isRitualActive = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Journey reset to Day 1.")),
-    );
   }
 
   void _calculateEntries(int s) {
@@ -170,10 +167,10 @@ class _MainAppFlowState extends State<MainAppFlow> {
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(15)),
+            decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(15)),
             child: Text(_descriptors[idx], 
               textAlign: TextAlign.center, 
-              style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5, fontWeight: FontWeight.w600)),
+              style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 50),
           ElevatedButton(
@@ -225,7 +222,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
       Column(
         children: [
           const SizedBox(height: 20),
-          const Text("YOUR PROGRESS", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text("30-DAY PROGRESS", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
@@ -237,13 +234,12 @@ class _MainAppFlowState extends State<MainAppFlow> {
               ),
             ),
           ),
-          // Reset Button
           Padding(
-            padding: const EdgeInsets.only(bottom: 110),
+            padding: const EdgeInsets.only(bottom: 120),
             child: TextButton.icon(
               onPressed: () => _showResetDialog(),
-              icon: const Icon(Icons.refresh, color: Colors.white70),
-              label: const Text("RESET 30-DAY JOURNEY", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+              icon: const Icon(Icons.refresh, color: Colors.white60),
+              label: const Text("RESET JOURNEY", style: TextStyle(color: Colors.white60, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -257,7 +253,7 @@ class _MainAppFlowState extends State<MainAppFlow> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF004D40),
         title: const Text("Reset Journey?", style: TextStyle(color: Colors.white)),
-        content: const Text("This will clear your current streak and entries. This cannot be undone.", style: TextStyle(color: Colors.white70)),
+        content: const Text("This will clear your streak and giveaway entries. This cannot be undone.", style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL", style: TextStyle(color: Colors.white))),
           TextButton(onPressed: () { Navigator.pop(context); _resetJourney(); }, child: const Text("RESET", style: TextStyle(color: Colors.redAccent))),
